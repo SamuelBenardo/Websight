@@ -1,216 +1,1110 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>File Permissions</title>
     <style>
-      body { font-family: "Times New Roman", Times, serif; background: #ffffff; color: #000000; margin: 24px; line-height: 1.55; }
-      main { max-width: 900px; margin: 0 auto; }
-      h1, h2, h3 { font-weight: bold; }
-      h1 { font-size: 36px; margin: 0 0 12px; }
-      h2 { font-size: 24px; margin: 28px 0 10px; }
-      h3 { font-size: 18px; margin: 18px 0 8px; }
-      p { margin: 10px 0; }
-      ul { margin: 8px 0 8px 24px; }
-      code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
-      hr { border: none; border-top: 1px solid #000; margin: 24px 0; }
-      .small { font-size: 14px; }
+      body {
+        font-family: "Times New Roman", Times, serif;
+        background: #ffffff;
+        color: #000000;
+        margin: 24px;
+        line-height: 1.55;
+      }
+      main {
+        max-width: 900px;
+        margin: 0 auto;
+      }
+      h1,
+      h2,
+      h3 {
+        font-weight: bold;
+      }
+      h1 {
+        font-size: 36px;
+        margin: 0 0 12px;
+      }
+      h2 {
+        font-size: 24px;
+        margin: 28px 0 10px;
+      }
+      h3 {
+        font-size: 18px;
+        margin: 18px 0 8px;
+      }
+      p {
+        margin: 10px 0;
+      }
+      .mini-term {
+        background: #300a24; /* Ubuntu aubergine */
+        color: #eeeeec; /* Ubuntu light foreground */
+        border: 1px solid #3d1634;
+        border-radius: 6px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+          "Liberation Mono", "Courier New", monospace;
+        margin: 12px 0 4px;
+        display: flex;
+        flex-direction: column;
+      }
+      .mini-term-header {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 12px;
+        background: #2c001e; /* darker header strip */
+        border-bottom: 1px solid #3d1634;
+        padding: 4px 10px;
+        padding-right: 220px; /* reserve space for summary and controls on the right */
+        min-height: 30px; /* thinner bar that still encloses buttons */
+      }
+      .mini-term-summary {
+        display: inline;
+        color: #d3d7cf;
+        position: absolute;
+        top: 50%;
+        left: 10px; /* top-left summary */
+        transform: translateY(-50%);
+      }
+      .mini-term-controls {
+        position: absolute;
+        top: 50%;
+        right: 10px;
+        transform: translateY(-50%);
+        display: flex;
+        gap: 6px;
+      }
+      .mini-term-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: transparent;
+        color: #eeeeec;
+        border: 1px solid #5c2742;
+        width: 28px;
+        height: 22px;
+        line-height: 22px;
+        text-align: center;
+        border-radius: 4px;
+        cursor: pointer;
+        padding: 0;
+        font: inherit;
+      }
+      .mini-term-btn:hover {
+        background: #3a1430;
+      }
+      .mini-term-btn--max {
+        font-size: 18px; /* slightly larger square icon */
+      }
+      .mini-term-screen {
+        padding: 10px 12px;
+        min-height: 140px;
+        max-height: 320px;
+        overflow-y: auto;
+        white-space: pre-wrap;
+        color: #eeeeec;
+      }
+      .mini-term-input {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 12px;
+        border-top: 1px solid #3d1634;
+      }
+      .mini-term-prompt {
+        color: inherit;
+        white-space: pre;
+      }
+      .mini-term .prompt-userhost {
+        color: #8ae234;
+      } /* green */
+      .mini-term .prompt-path {
+        color: #729fcf;
+      } /* blue */
+      .mini-term .prompt-dollar {
+        color: #eeeeec;
+      } /* fg */
+      .mini-term .ls-dir {
+        color: #729fcf;
+      }
+      .mini-term .term-instruction {
+        font-style: italic;
+        margin: 10px 0;
+      }
+      .mini-term .prompt-userhost {
+        color: #8ae234;
+      } /* green */
+      .mini-term .prompt-path {
+        color: #729fcf;
+      } /* blue */
+      .mini-term .prompt-dollar {
+        color: #eeeeec;
+      } /* fg */
+      .mini-term-input input {
+        flex: 1;
+        background: transparent;
+        color: #e5e5e5;
+        border: none;
+        outline: none;
+        font: inherit;
+        padding: 0;
+      }
+      /* Minimized: one-line bar with summary and buttons */
+      .mini-term.minimized .mini-term-screen,
+      .mini-term.minimized .mini-term-input {
+        display: none;
+      }
+      .mini-term.minimized .mini-term-summary {
+        display: inline;
+      }
+      /* Maximized: overlay to full page */
+      .mini-term.maximized {
+        position: fixed;
+        inset: 0;
+        width: 100vw;
+        height: 100vh;
+        margin: 0;
+        border-radius: 0;
+        z-index: 9999;
+      }
+      .mini-term.maximized .mini-term-screen {
+        max-height: none;
+        flex: 1;
+      }
+      /* Controls use default right inset in all states */
+      ul {
+        margin: 8px 0 8px 24px;
+      }
+      code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+          "Liberation Mono", "Courier New", monospace;
+      }
+      hr {
+        border: none;
+        border-top: 1px solid #000;
+        margin: 24px 0;
+      }
+      .small {
+        font-size: 14px;
+      }
     </style>
   </head>
   <body>
     <main>
       <header>
         <h1>File Permissions</h1>
-        <p class="small"><strong>Before you start:</strong> Know what a <em>file</em> and a <em>folder (directory)</em> are. If you have never used a terminal or command prompt, that’s ok — we keep the language plain and define every new term; commands are shown only to illustrate ideas, not to require you to run them.</p>
       </header>
 
-      <section>
-        <h2>One Picture for Everything: A Campus</h2>
-        <p>Imagine a small campus. A <strong>file</strong> is a room with things inside. A <strong>directory</strong> is a hallway that organizes rooms by name. People carry badges. Every door checks three badge groups:</p>
-        <ul>
-          <li><strong>Owner</strong>: the person responsible for the room.</li>
-          <li><strong>Group</strong>: a team that can also get in.</li>
-          <li><strong>Others</strong>: everyone else on campus.</li>
-        </ul>
-        <p>Each door can allow three actions: <strong>read</strong> (look inside), <strong>write</strong> (change what’s inside), and <strong>execute</strong> (use the room to run an activity; on hallways it means you can pass through). We will keep expanding this same picture as new ideas appear, so nothing feels random.</p>
-      </section>
+      <p>
+        A <strong>file</strong> contains data that your operating system
+        (Windows, Linux, macOS, etc.) stores. A <strong>directory</strong> is a
+        special kind of record that stores a list of names and references to
+        those files and/or other directories so the system can organize
+        everything. Imagine in a school, a file is a single room that holds its
+        materials. A directory is a hallway that leads to or contains rooms, as
+        well as branches off into other hallways. This system of rooms and
+        hallways is a <strong>tree</strong>. In the Harvard-Westlake school
+        metaphor, the school campus is the root of the tree, which branches out
+        into buildings (Chalmers, Seaver, etc.), and then further into rooms
+        (Student Lounge) and hallways (Upper Chalmers), that contain their own
+        rooms (Chalmers 305).
+      </p>
 
-      <section>
-        <h2>1) The Big Picture</h2>
-        <p><strong>File permissions</strong> are the rules that say who can do what to files and folders. “Who” is owner, group, and others. “What” is read, write, and execute. Linux and macOS follow this model everywhere. Windows uses a more detailed list, but the idea is the same: decide which actions are allowed for which people.</p>
-      </section>
+      <p>
+        <strong>cd</strong> changes your working location. Use
+        <strong>cd filepath</strong> to move into a folder;
+        <strong>cd ..</strong> goes up to the parent;
+        <strong>cd ~</strong> jumps to your home (here, the campus root). After
+        you change location, <strong>ls -A</strong> shows what’s inside the
+        current directory. Try it yourself! Click at the bottom of the terminal
+        below, follow the prompts, and remember to press Enter after each
+        writting each command.
+      </p>
 
-      <section>
-        <h2>2) Classic Unix Model (r, w, x)</h2>
-        <p>Each room has an owner, a team (group), and three sets of switches for <strong>read</strong> (r), <strong>write</strong> (w), and <strong>execute</strong> (x) — one set for owner, one for group, one for others. You might see this written as <code>-rwxr-x---</code>, which means: owner = read+write+execute, group = read+execute, others = no access.</p>
-        <p>Changing rules (examples for context):</p>
-        <ul>
-          <li><strong>chmod</strong> (change mode): <code>chmod u+rwx,g+rx,o-rwx file</code> edits switches for user (u), group (g), and others (o).</li>
-          <li><strong>chown</strong> (change owner): <code>sudo chown alice:engineers file</code> sets both the owner (<code>alice</code>) and the owner group (<code>engineers</code>).</li>
-          <li><strong>chgrp</strong> (change group): <code>chgrp engineers file</code> sets only the group.</li>
-        </ul>
-        <p><em>About the colon:</em> In <code>chown alice:engineers file</code>, the <code>:</code> separates user and group. It sets the file’s owner and its group; it does not change Alice’s personal group memberships.</p>
-      </section>
+      <div
+        class="mini-term"
+        id="mini-term-cd"
+        role="group"
+        aria-label="Mini terminal (cd practice)"
+      >
+        <div class="mini-term-header">
+          <span class="mini-term-summary" id="mini-term-cd-summary"
+            >cd practice</span
+          >
+          <div class="mini-term-controls">
+            <button
+              type="button"
+              class="mini-term-btn mini-term-btn--min"
+              id="mini-term-cd-min"
+              aria-label="Minimize terminal"
+              title="Minimize"
+            >
+              –
+            </button>
+            <button
+              type="button"
+              class="mini-term-btn mini-term-btn--max"
+              id="mini-term-cd-max"
+              aria-label="Maximize terminal"
+              title="Maximize"
+            >
+              □
+            </button>
+          </div>
+        </div>
+        <div
+          class="mini-term-screen"
+          id="mini-term-cd-screen"
+          aria-live="polite"
+          aria-atomic="false"
+        ></div>
+        <div class="mini-term-input">
+          <span class="mini-term-prompt" id="mini-term-cd-prompt"
+            ><span class="prompt-userhost">sam@DESKTOP-WSL</span>:<span
+              class="prompt-path"
+              >~/Harvard-Westlake</span
+            ><span class="prompt-dollar">$</span></span
+          >
+          <input
+            id="mini-term-cd-cmd"
+            type="text"
+            spellcheck="false"
+            autocomplete="off"
+            aria-label="Terminal command input"
+          />
+        </div>
+      </div>
 
-      <section>
-        <h2>3) Octal Shorthand (Numbers like 755)</h2>
-        <p>Each set of switches can be written as one digit: r=4, w=2, x=1. Add them: 7=rwx (4+2+1), 5=r‑x (4+1), 6=rw‑ (4+2), 0=---. The three digits go in order: owner, group, others. Example: <code>chmod 750 file</code> gives owner=7 (rwx), group=5 (r‑x), others=0 (---).</p>
-      </section>
+      <p>
+        Every file and directory belongs to an <strong>owner</strong>, which is
+        a single user account responsible for it; it also belongs to a
+        <strong>group</strong>, which is a named team of user accounts, and
+        everyone else on the system is treated as <strong>other</strong>. In the
+        school picture, imagine the Harvard-Westlake school as one person, the
+        owner is that one person who owns a given room, or hallway. The group
+        could for example be the student body, who is also given certain
+        privleges in the room, or hallway. Finally, other(s) are the general
+        public, who may only be granted access to the room or hallway during a
+        public Harvard-Westlake event.
+      </p>
 
-      <section>
-        <h2>4) Files vs Directories (Rooms vs Hallways)</h2>
-        <ul>
-          <li>On a <strong>file</strong>, execute means “you can run this.”</li>
-          <li>On a <strong>directory</strong>, execute means “you may enter/traverse this hallway if you already know a room name.”</li>
-          <li>On a directory, read lets you list names; write lets you add, rename, or remove entries inside.</li>
-        </ul>
-      </section>
+      <p>
+        The system checks three basic actions for each of these audiences:
+        <strong>read</strong>, <strong>write</strong>, and
+        <strong>execute</strong>. On a file, read means you may view the
+        contents, write means you may change the contents, and execute means you
+        may run it as a program if it is runnable. On a directory, read means
+        you may list the names inside, write means you may add, rename, or
+        remove entries, and execute means you may enter it and move through it
+        when you already know the name of something inside.
+      </p>
 
-      <section>
-        <h2>5) Defaults and Umask (The Door Stencil)</h2>
-        <p>When a new room appears, the system starts from a generous template and then removes certain permissions using a <strong>mask</strong> called the <strong>umask</strong> (user file‑creation mode mask).</p>
-        <ul>
-          <li>Show symbolic umask: <code>umask -S</code> (e.g., <code>u=rwx,g=rx,o=rx</code>).</li>
-          <li>Set umask (symbols): <code>umask u=rwx,g=rx,o=</code> (typically yields files ~640 and directories ~750).</li>
-        </ul>
-      </section>
+      <p>
+        <strong>ls -l</strong> shows a “long listing” of the current directory:
+        each item on its own line with its permissions, number of links, owner,
+        group, size, last modified time, and name. This is like reading the
+        hallway roster that lists each room with its posted rules and who is
+        responsible. Let's see how we can use ls -l to identify the properties
+        of files and directories we just discussed. The terminal below will
+        guide you to run ls -l here and then use cd to move to a few related
+        folders and list them too.
+      </p>
 
-      <section>
-        <h2>6) Special Bits (Stickers on Doors)</h2>
-        <ul>
-          <li><strong>setuid</strong>: when you “run the room,” you act with the owner’s badge. Set with <code>chmod u+s file</code> (octal adds 4<span aria-hidden="true">000</span>).</li>
-          <li><strong>setgid</strong>: on files, you act with the room’s team badge; on directories, new items inherit the directory’s group. Set with <code>chmod g+s path</code> (octal adds 2<span aria-hidden="true">000</span>).</li>
-          <li><strong>sticky bit</strong> (directories): in shared hallways, only the item’s owner (or admin) may remove/rename their own item, even if the hallway is world‑writable. Set with <code>chmod +t dir</code> (octal adds 1<span aria-hidden="true">000</span>).</li>
-        </ul>
-        <p>These stickers change how activities run and how shared spaces behave. Use them carefully.</p>
-      </section>
+      <div
+        class="mini-term"
+        id="mini-term"
+        role="group"
+        aria-label="Mini terminal"
+      >
+        <div class="mini-term-header">
+          <span class="mini-term-summary" id="mini-term-summary"
+            >ls -l practice</span
+          >
+          <div class="mini-term-controls">
+            <button
+              type="button"
+              class="mini-term-btn mini-term-btn--min"
+              id="mini-term-min"
+              aria-label="Minimize terminal"
+              title="Minimize"
+            >
+              –
+            </button>
+            <button
+              type="button"
+              class="mini-term-btn mini-term-btn--max"
+              id="mini-term-max"
+              aria-label="Maximize terminal"
+              title="Maximize"
+            >
+              □
+            </button>
+          </div>
+        </div>
+        <div
+          class="mini-term-screen"
+          id="mini-term-screen"
+          aria-live="polite"
+          aria-atomic="false"
+        ></div>
+        <div class="mini-term-input">
+          <span class="mini-term-prompt" id="mini-term-prompt"
+            ><span class="prompt-userhost">sam@DESKTOP-WSL</span>:<span
+              class="prompt-path"
+              >~/Harvard-Westlake/Chalmers</span
+            ><span class="prompt-dollar">$</span></span
+          >
+          <input
+            id="mini-term-cmd"
+            type="text"
+            spellcheck="false"
+            autocomplete="off"
+            aria-label="Terminal command input"
+          />
+        </div>
+      </div>
 
-      <section>
-        <h2>7) Extended Attributes and ACLs (Sticky Notes and Guest Passes)</h2>
-        <ul>
-          <li><strong>Extended attributes</strong>: small extra notes attached to a file (platform‑specific).</li>
-          <li><strong>ACLs (Access Control Lists)</strong>: per‑person or per‑team entries (e.g., <code>user:alex:rw-</code>) for fine control.</li>
-          <li><strong>ACL mask</strong>: a ceiling that limits all named entries; if the mask is <code>r-x</code>, no named entry can exceed <code>r-x</code>.</li>
-          <li><strong>Capital X</strong> in ACLs: grant execute only for directories or where execute already exists; useful when you apply rules to many items.</li>
-        </ul>
-      </section>
+      <p>
+        <strong>chmod</strong> changes the rules themselves—who may read, who
+        may write, and who may execute, without changing who owns a file or
+        which group it belongs to. In the school picture, this is like updating
+        the sign on a room’s door: “Teachers may rearrange desks,” “Club members
+        may come in after school,” “Guests may only observe.” The people and
+        clubs don’t change; the posted rules for owner, group, and others do.
+      </p>
 
-      <section>
-        <h2>8) Identity Details (Badges Under the Hood)</h2>
-        <ul>
-          <li><strong>UID</strong>: user number. <strong>GID</strong>: group number.</li>
-          <li><strong>Real</strong> vs <strong>effective</strong> identity: who you are vs whose badge you’re currently using.</li>
-          <li><strong>Supplementary groups</strong>: extra teams attached to your badge.</li>
-        </ul>
-      </section>
+      <p>
+        <strong>chown</strong> changes who is officially responsible for a file
+        or directory by transferring its owner to a different user account. In
+        the school picture, this is like handing the keys and responsibility for
+        a room from one teacher to another; the room may keep the same posted
+        rules, but the person who counts as “the owner” for permission checks is
+        now different.
+      </p>
 
-      <section>
-        <h2>9) Filesystems and Mount Options (Campus Wings)</h2>
-        <p>Different storage types (ext4, xfs, btrfs, APFS, NTFS) support different features. A wing can also post extra rules: <code>noexec</code> (don’t allow executing), <code>nosuid</code> (ignore setuid/setgid), <code>nodev</code> (treat device files as normal).</p>
-      </section>
-
-      <section>
-        <h2>10) Network Filesystems (Partner Campuses)</h2>
-        <ul>
-          <li><strong>NFS</strong>: maps identities across machines; often reduces remote admin to a harmless user (<em>root_squash</em>).</li>
-          <li><strong>SMB/CIFS</strong>: Windows‑style sharing that translates between Unix permissions and NTFS ACLs when crossing systems.</li>
-        </ul>
-      </section>
-
-      <section>
-        <h2>11) Security Layers (Campus Safety Office)</h2>
-        <ul>
-          <li><strong>SELinux</strong>: labels processes and files and enforces a policy; even when rwx says “yes,” policy can say “no.”</li>
-          <li><strong>AppArmor</strong>: profiles that declare which paths and actions a program may use.</li>
-          <li><strong>Linux capabilities</strong>: small slices of admin power (for example, the ability to bind low ports).</li>
-          <li><strong>seccomp</strong>: a filter that limits what a program can ask the system to do.</li>
-        </ul>
-      </section>
-
-      <section>
-        <h2>12) Containers and Orchestration (Vendors on Campus)</h2>
-        <p>Containers use the same Unix permission rules inside, but badge numbers can be remapped. Shared folders follow the host’s permissions. In Kubernetes, settings can specify which user/group numbers to use and how volumes inherit groups.</p>
-      </section>
-
-      <section>
-        <h2>13) Windows / NTFS (Detailed Guest Lists)</h2>
-        <ul>
-          <li>Per‑object ACLs with entries (ACEs) for users or groups.</li>
-          <li>Rights include Read, Write, Execute, Modify, Full Control; inheritance flows to child folders unless blocked.</li>
-          <li>Explicit Deny overrides allows; the owner (or admins) can change the ACL.</li>
-          <li>Tools: GUI Security tab; PowerShell <code>Get-Acl</code>/<code>Set-Acl</code>; CLI <code>icacls</code>.</li>
-        </ul>
-      </section>
-
-      <section>
-        <h2>14) Cloud Storage and Apps (Cloud Campus)</h2>
-        <ul>
-          <li>Object stores (S3, GCS, Azure) combine account/project policies (roles) with bucket/object ACLs.</li>
-          <li>Apps like Drive/Dropbox add sharing links and organization‑wide rules.</li>
-        </ul>
-      </section>
-
-      <section>
-        <h2>15) Effective Access (What Actually Happens)</h2>
-        <p>Real access is the combination of door rules (rwx), guest passes (ACLs), the ceiling (ACL mask), wing rules (mount options), and safety policies (SELinux/AppArmor, capabilities, seccomp). Any layer can veto the final result.</p>
-      </section>
-
-      <section>
-        <h2>16) Safer Setups and Pitfalls</h2>
-        <ul>
-          <li>Grant only what’s needed (least privilege). Prefer groups over per‑person rules.</li>
-          <li>Unix: <code>755</code> public, <code>750</code> team, <code>700</code> private. Avoid <code>777</code> unless it’s a sticky directory made for sharing.</li>
-          <li>Shared trees: setgid on the top directory so new items inherit the team; add default ACLs for consistency.</li>
-          <li>Windows: avoid “Everyone: Full Control.” Use groups, let inheritance carry most permissions; use Deny sparingly.</li>
-        </ul>
-      </section>
-
-      <section>
-        <h2>17) Quick Reference (Unix)</h2>
-        <ul>
-          <li>See: <code>ls -l</code>; walk each part: <code>namei -l path</code>.</li>
-          <li>Change: <code>chmod u=rw,g=r,o= file</code> or <code>chmod 640 file</code>.</li>
-          <li>Owner/group: <code>chown alice:dev file</code>; <code>chgrp dev file</code>.</li>
-          <li>ACLs: <code>getfacl file</code>; <code>setfacl -m u:alice:rw file</code>; default on dir: <code>setfacl -m d:g:dev:rwX dir/</code>.</li>
-          <li>Special bits: <code>chmod 4755 file</code> (setuid); <code>chmod 2755 dir</code> (setgid); <code>chmod 1777 shared</code> (sticky).</li>
-          <li>Find risks: <code>find . -perm -0002</code> (world‑writable); <code>find . -perm -4000</code> (setuid).</li>
-        </ul>
-      </section>
-
-      <section>
-        <h2>18) Quick Reference (Windows)</h2>
-        <ul>
-          <li>View/edit: <code>icacls .</code>; grant: <code>icacls file /grant "Engineering:(RX,M)"</code>; remove inheritance: <code>icacls file /inheritance:r</code>.</li>
-          <li>PowerShell: <code>Get-Acl</code>, <code>Set-Acl</code>.</li>
-          <li>Check effective access with Advanced Security Settings (GUI).</li>
-        </ul>
-      </section>
-
-      <section>
-        <h2>19) Practice</h2>
-        <ul>
-          <li><strong>Team share (Unix)</strong>: make a group‑owned directory; enable setgid on it; add default ACLs so new items match.</li>
-          <li><strong>Public web dir (Unix)</strong>: hallway open to read/traverse by all; only you can write.</li>
-          <li><strong>Temp scratch (Unix)</strong>: shared world‑writable hallway with sticky bit so no one can delete others’ files.</li>
-          <li><strong>Read‑only handouts (Windows)</strong>: “Students” can read; “Staff” can modify; remove “Everyone.”</li>
-        </ul>
-      </section>
-
-      <section>
-        <h2>Common Mix‑ups</h2>
-        <p>Renaming a project in a Git app is usually not about sticky bits or filesystem permissions. Renaming a local folder needs write/execute on the parent directory; renaming a hosted repository depends on your role on that service and may require updating the remote URL locally.</p>
-      </section>
-
-      <hr />
-      <footer class="small">
-        <p>© <span id="year"></span>. Plain, readable version — black Times New Roman on white.</p>
-        <script>
-          document.getElementById('year').textContent = new Date().getFullYear();
-        </script>
-      </footer>
+      <p>
+        <strong>chgrp</strong> changes which team a file or directory is
+        associated with by switching its group. In the school picture, this is
+        like reassigning a room from the Chess Club to the Debate Team; the
+        “group rules” on the door still say what that group may do, but they now
+        apply to the new club rather than the old one.
+      </p>
     </main>
+    <script>
+      (function () {
+        var term = document.getElementById("mini-term");
+        var screen = document.getElementById("mini-term-screen");
+        var input = document.getElementById("mini-term-cmd");
+        var promptEl = document.getElementById("mini-term-prompt");
+        var btnMin = document.getElementById("mini-term-min");
+        var btnMax = document.getElementById("mini-term-max");
+        var summary = document.getElementById("mini-term-summary");
+
+        var isMinimized = false;
+        var isMaximized = false;
+
+        function escapeHtml(s) {
+          return s
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;");
+        }
+        function appendLine(text) {
+          screen.insertAdjacentHTML(
+            "beforeend",
+            '<div class="term-line">' + escapeHtml(text) + "</div>"
+          );
+          screen.scrollTop = screen.scrollHeight;
+        }
+        function appendRawLine(html) {
+          screen.insertAdjacentHTML(
+            "beforeend",
+            '<div class="term-line">' + html + "</div>"
+          );
+          screen.scrollTop = screen.scrollHeight;
+        }
+        function appendInstruction(text) {
+          screen.insertAdjacentHTML(
+            "beforeend",
+            '<div class="term-instruction"><em>' +
+              escapeHtml(text) +
+              "</em></div>"
+          );
+          screen.scrollTop = screen.scrollHeight;
+        }
+
+        function setMinimized(min) {
+          isMinimized = min;
+          if (min) {
+            term.classList.add("minimized");
+            input.setAttribute("disabled", "true");
+            btnMin.textContent = "❐";
+            btnMin.title = "Restore";
+            btnMin.setAttribute("aria-label", "Restore terminal");
+            if (isMaximized) setMaximized(false);
+          } else {
+            term.classList.remove("minimized");
+            input.removeAttribute("disabled");
+            btnMin.textContent = "–";
+            btnMin.title = "Minimize";
+            btnMin.setAttribute("aria-label", "Minimize terminal");
+            input.focus();
+          }
+        }
+
+        function setMaximized(max) {
+          isMaximized = max;
+          if (max) {
+            term.classList.add("maximized");
+            btnMax.textContent = "❐";
+            btnMax.title = "Restore";
+            btnMax.setAttribute("aria-label", "Restore terminal");
+            if (isMinimized) setMinimized(false);
+            document.body.style.overflow = "hidden";
+          } else {
+            term.classList.remove("maximized");
+            btnMax.textContent = "□";
+            btnMax.title = "Maximize";
+            btnMax.setAttribute("aria-label", "Maximize terminal");
+            document.body.style.overflow = "";
+          }
+        }
+
+        btnMin.addEventListener("click", function () {
+          setMinimized(!isMinimized);
+        });
+
+        btnMax.addEventListener("click", function () {
+          setMaximized(!isMaximized);
+        });
+
+        // Filesystem for ls -l exploration with metaphor-appropriate owner/group and permissions
+        var fs = {
+          name: "Harvard-Westlake",
+          entries: [
+            {
+              type: "dir",
+              mode: "drwxr-xr-x",
+              nlink: 3,
+              owner: "hw_admin",
+              group: "faculty",
+              size: 4096,
+              mtime: "Nov 16 12:30",
+              name: "Chalmers",
+            },
+            {
+              type: "dir",
+              mode: "drwxr-xr-x",
+              nlink: 3,
+              owner: "hw_admin",
+              group: "faculty",
+              size: 4096,
+              mtime: "Nov 16 12:31",
+              name: "Seaver",
+            },
+          ],
+          children: {
+            Chalmers: {
+              entries: [
+                {
+                  type: "file",
+                  mode: "-rw-rw-r--",
+                  nlink: 1,
+                  owner: "hw_admin",
+                  group: "students",
+                  size: 2048,
+                  mtime: "Nov 16 12:40",
+                  name: "StudentLounge",
+                },
+                {
+                  type: "dir",
+                  mode: "drwxr-xr-x",
+                  nlink: 3,
+                  owner: "hw_admin",
+                  group: "faculty",
+                  size: 4096,
+                  mtime: "Nov 16 12:41",
+                  name: "UpperChalmers",
+                },
+                {
+                  type: "file",
+                  mode: "-rw-r--r--",
+                  nlink: 1,
+                  owner: "hw_admin",
+                  group: "students",
+                  size: 256,
+                  mtime: "Nov 15 09:12",
+                  name: "notice.txt",
+                },
+              ],
+              children: {
+                UpperChalmers: {
+                  entries: [
+                    {
+                      type: "file",
+                      mode: "-rw-r-----",
+                      nlink: 1,
+                      owner: "teacher_lee",
+                      group: "faculty",
+                      size: 3072,
+                      mtime: "Nov 12 10:00",
+                      name: "Chalmers305",
+                    },
+                    {
+                      type: "file",
+                      mode: "-rw-r--r--",
+                      nlink: 1,
+                      owner: "teacher_lee",
+                      group: "faculty",
+                      size: 512,
+                      mtime: "Nov 12 09:00",
+                      name: "schedule.txt",
+                    },
+                  ],
+                  children: {},
+                },
+              },
+            },
+            Seaver: { entries: [], children: {} },
+          },
+        };
+
+        var path = ["Harvard-Westlake", "Chalmers"];
+
+        function getNode(pathArr) {
+          var node = fs;
+          for (var i = 1; i < pathArr.length; i++) {
+            var name = pathArr[i];
+            if (!node.children || !node.children[name]) return null;
+            node = node.children[name];
+          }
+          return node;
+        }
+
+        function updatePrompt() {
+          var p = "~/" + path.join("/");
+          promptEl.innerHTML =
+            '<span class="prompt-userhost">sam@DESKTOP-WSL</span>:' +
+            '<span class="prompt-path">' +
+            p +
+            "</span>" +
+            '<span class="prompt-dollar">$</span>';
+        }
+
+        function lsLong() {
+          var node = getNode(path);
+          var entries = (node && node.entries) || [];
+          var total = entries.length * 4;
+          appendLine("total " + total);
+          for (var i = 0; i < entries.length; i++) {
+            var e = entries[i];
+            var nameHtml =
+              e.type === "dir"
+                ? '<span class="ls-dir">' + escapeHtml(e.name) + "</span>"
+                : escapeHtml(e.name);
+            appendRawLine(
+              escapeHtml(
+                e.mode +
+                  " " +
+                  e.nlink +
+                  " " +
+                  e.owner +
+                  " " +
+                  e.group +
+                  " " +
+                  ("" + e.size).padStart(4, " ") +
+                  " " +
+                  e.mtime +
+                  " "
+              ) + nameHtml
+            );
+          }
+        }
+
+        function listChildrenNames() {
+          var node = getNode(path);
+          return Object.keys((node && node.children) || {}).sort();
+        }
+
+        // Guided steps for ls -l exploration
+        var step = 0;
+        var freeMode = false;
+        function showNext() {
+          switch (step) {
+            case 0:
+              appendInstruction("Try: ls -l");
+              break;
+            case 1:
+              appendInstruction("Try: cd StudentLounge");
+              break;
+            case 2:
+              appendInstruction("Try: ls -l");
+              break;
+            case 3:
+              appendInstruction("Try: cd ..");
+              break;
+            case 4:
+              appendInstruction("Try: cd UpperChalmers");
+              break;
+            case 5:
+              appendInstruction("Try: ls -l");
+              break;
+            case 6:
+              appendInstruction("Try: cd Chalmers305");
+              break;
+            case 7:
+              appendInstruction("Try: ls -l");
+              break;
+            default:
+              appendInstruction(
+                "All set! You can keep using cd and ls -l to explore."
+              );
+              freeMode = true;
+          }
+        }
+
+        // Intro
+        appendInstruction(
+          "Let's explore detailed listings. Follow the prompts below."
+        );
+        updatePrompt();
+        showNext();
+
+        input.addEventListener("keydown", function (e) {
+          if (e.key !== "Enter") return;
+          e.preventDefault();
+          var raw = input.value;
+          var cmd = raw.trim();
+          appendLine(promptEl.textContent + " " + raw);
+
+          if (step === 0) {
+            if (cmd === "ls -l") {
+              lsLong();
+              step = 1;
+              showNext();
+            } else {
+              appendInstruction("Try: ls -l");
+            }
+          } else if (step === 1) {
+            if (cmd === "cd StudentLounge") {
+              path.push("StudentLounge");
+              updatePrompt();
+              step = 2;
+              showNext();
+            } else {
+              appendInstruction("Try: cd StudentLounge");
+            }
+          } else if (step === 2) {
+            if (cmd === "ls -l") {
+              lsLong();
+              step = 3;
+              showNext();
+            } else {
+              appendInstruction("Try: ls -l");
+            }
+          } else if (step === 3) {
+            if (cmd === "cd ..") {
+              if (path.length > 1) path.pop();
+              updatePrompt();
+              step = 4;
+              showNext();
+            } else {
+              appendInstruction("Try: cd ..");
+            }
+          } else if (step === 4) {
+            if (cmd === "cd UpperChalmers") {
+              path.push("UpperChalmers");
+              updatePrompt();
+              step = 5;
+              showNext();
+            } else {
+              appendInstruction("Try: cd UpperChalmers");
+            }
+          } else if (step === 5) {
+            if (cmd === "ls -l") {
+              lsLong();
+              step = 6;
+              showNext();
+            } else {
+              appendInstruction("Try: ls -l");
+            }
+          } else if (step === 6) {
+            if (cmd === "cd Chalmers305") {
+              path.push("Chalmers305");
+              updatePrompt();
+              step = 7;
+              showNext();
+            } else {
+              appendInstruction("Try: cd Chalmers305");
+            }
+          } else if (step === 7) {
+            if (cmd === "ls -l") {
+              lsLong();
+              step = 8;
+              showNext();
+            } else {
+              appendInstruction("Try: ls -l");
+            }
+          } else {
+            // Free exploration (no further instructions)
+            if (cmd === "ls -l") {
+              lsLong();
+            } else if (cmd === "cd ..") {
+              if (path.length > 1) {
+                path.pop();
+                updatePrompt();
+              }
+            } else if (cmd === "cd ~") {
+              path = ["Harvard-Westlake"];
+              updatePrompt();
+            } else if (cmd.indexOf("cd ") === 0) {
+              var target = cmd.slice(3).trim();
+              var children = listChildrenNames();
+              if (children.indexOf(target) !== -1) {
+                path.push(target);
+                updatePrompt();
+              }
+            } else {
+              // ignore other input to keep practice uninterrupted
+            }
+          }
+
+          input.value = "";
+        });
+      })();
+    </script>
+    <script>
+      (function () {
+        // CD practice terminal
+        var term = document.getElementById("mini-term-cd");
+        if (!term) return;
+        var screen = document.getElementById("mini-term-cd-screen");
+        var input = document.getElementById("mini-term-cd-cmd");
+        var promptEl = document.getElementById("mini-term-cd-prompt");
+        var btnMin = document.getElementById("mini-term-cd-min");
+        var btnMax = document.getElementById("mini-term-cd-max");
+
+        var isMinimized = false;
+        var isMaximized = false;
+
+        function escapeHtml(s) {
+          return s
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;");
+        }
+        function appendLine(text) {
+          screen.insertAdjacentHTML(
+            "beforeend",
+            '<div class="term-line">' + escapeHtml(text) + "</div>"
+          );
+          screen.scrollTop = screen.scrollHeight;
+        }
+        function appendRawLine(html) {
+          screen.insertAdjacentHTML(
+            "beforeend",
+            '<div class="term-line">' + html + "</div>"
+          );
+          screen.scrollTop = screen.scrollHeight;
+        }
+        function appendInstruction(text) {
+          screen.insertAdjacentHTML(
+            "beforeend",
+            '<div class="term-instruction"><em>' +
+              escapeHtml(text) +
+              "</em></div>"
+          );
+          screen.scrollTop = screen.scrollHeight;
+        }
+
+        function setMinimized(min) {
+          isMinimized = min;
+          if (min) {
+            term.classList.add("minimized");
+            input.setAttribute("disabled", "true");
+            btnMin.textContent = "❐";
+            btnMin.title = "Restore";
+            btnMin.setAttribute("aria-label", "Restore terminal");
+            if (isMaximized) setMaximized(false);
+          } else {
+            term.classList.remove("minimized");
+            input.removeAttribute("disabled");
+            btnMin.textContent = "–";
+            btnMin.title = "Minimize";
+            btnMin.setAttribute("aria-label", "Minimize terminal");
+            input.focus();
+          }
+        }
+
+        function setMaximized(max) {
+          isMaximized = max;
+          if (max) {
+            term.classList.add("maximized");
+            btnMax.textContent = "❐";
+            btnMax.title = "Restore";
+            btnMax.setAttribute("aria-label", "Restore terminal");
+            if (isMinimized) setMinimized(false);
+            document.body.style.overflow = "hidden";
+          } else {
+            term.classList.remove("maximized");
+            btnMax.textContent = "□";
+            btnMax.title = "Maximize";
+            btnMax.setAttribute("aria-label", "Maximize terminal");
+            document.body.style.overflow = "";
+          }
+        }
+
+        btnMin.addEventListener("click", function () {
+          setMinimized(!isMinimized);
+        });
+        btnMax.addEventListener("click", function () {
+          setMaximized(!isMaximized);
+        });
+
+        // Fake filesystem for Harvard-Westlake (directories only)
+        var fs = {
+          name: "Harvard-Westlake",
+          children: {
+            Chalmers: {
+              children: {
+                StudentLounge: { children: {} },
+                UpperChalmers: { children: { Chalmers305: { children: {} } } },
+              },
+            },
+            Seaver: { children: {} },
+          },
+        };
+
+        var path = ["Harvard-Westlake"]; // start at root
+
+        function getNode(pathArr) {
+          var node = fs;
+          for (var i = 1; i < pathArr.length; i++) {
+            var name = pathArr[i];
+            if (!node.children || !node.children[name]) return null;
+            node = node.children[name];
+          }
+          return node;
+        }
+
+        function listCurrent(includeDots) {
+          var node = getNode(path);
+          var dirNames = Object.keys(node.children || {}).sort();
+          var lines = [];
+          if (includeDots) {
+            lines.push(".");
+            lines.push("..");
+          }
+          for (var i = 0; i < dirNames.length; i++) lines.push(dirNames[i]);
+          return lines;
+        }
+
+        function promptPath() {
+          return "~/" + path.join("/");
+        }
+
+        function updatePrompt() {
+          var p = promptPath();
+          promptEl.innerHTML =
+            '<span class="prompt-userhost">sam@DESKTOP-WSL</span>:' +
+            '<span class="prompt-path">' +
+            p +
+            "</span>" +
+            '<span class="prompt-dollar">$</span>';
+        }
+
+        // Guided steps: require cd name, cd .., cd ~ with ls -A after each cd
+        var step = 0;
+        var freeModeCd = false;
+        var instructions = [
+          "Try: cd Chalmers",
+          "Try: ls -A",
+          "Try: cd UpperChalmers",
+          "Try: ls -A",
+          "Try: cd ..",
+          "Try: ls -A",
+          "Try: cd ~",
+          "Try: ls -A",
+          "Try: cd Seaver",
+          "Try: ls -A",
+        ];
+
+        function showNextInstruction() {
+          if (step < instructions.length) {
+            appendInstruction(instructions[step]);
+          } else {
+            appendInstruction(
+              "All set! You can keep using cd and ls -A to explore."
+            );
+            freeModeCd = true;
+          }
+        }
+
+        // Initial greeting (no full listing)
+        appendInstruction("Follow the prompts to practice cd and ls -A.");
+        showNextInstruction();
+
+        updatePrompt();
+
+        input.addEventListener("keydown", function (e) {
+          if (e.key !== "Enter") return;
+          e.preventDefault();
+          var raw = input.value;
+          var cmd = raw.trim();
+          appendLine(promptEl.textContent + " " + raw);
+
+          // Expect alternating cd and ls -A per step
+          if (step === 0) {
+            if (cmd === "cd Chalmers") {
+              path.push("Chalmers");
+              updatePrompt();
+              appendInstruction(
+                'Now type "ls -A" to see what is inside this folder.'
+              );
+              step = 1;
+            } else {
+              appendInstruction("Try: cd Chalmers");
+            }
+          } else if (step === 1) {
+            if (cmd === "ls -A") {
+              var items = listCurrent(false);
+              for (var i1 = 0; i1 < items.length; i1++) {
+                appendRawLine(
+                  '<span class="ls-dir">' + escapeHtml(items[i1]) + "</span>"
+                );
+              }
+              step = 2;
+              showNextInstruction();
+            } else {
+              appendInstruction("Try: ls -A");
+            }
+          } else if (step === 2) {
+            if (cmd === "cd UpperChalmers") {
+              path.push("UpperChalmers");
+              updatePrompt();
+              appendInstruction(
+                'Now type "ls -A" to see what is inside this folder.'
+              );
+              step = 3;
+            } else {
+              appendInstruction("Try: cd UpperChalmers");
+            }
+          } else if (step === 3) {
+            if (cmd === "ls -A") {
+              var items3 = listCurrent(false);
+              for (var i3 = 0; i3 < items3.length; i3++) {
+                appendRawLine(
+                  '<span class="ls-dir">' + escapeHtml(items3[i3]) + "</span>"
+                );
+              }
+              step = 4;
+              showNextInstruction();
+            } else {
+              appendInstruction("Try: ls -A");
+            }
+          } else if (step === 4) {
+            if (cmd === "cd ..") {
+              if (path.length > 1) path.pop();
+              updatePrompt();
+              appendInstruction(
+                'Now type "ls -A" to see what is inside this folder.'
+              );
+              step = 5;
+            } else {
+              appendInstruction("Try: cd ..");
+            }
+          } else if (step === 5) {
+            if (cmd === "ls -A") {
+              var items5 = listCurrent(false);
+              for (var i5 = 0; i5 < items5.length; i5++) {
+                appendRawLine(
+                  '<span class="ls-dir">' + escapeHtml(items5[i5]) + "</span>"
+                );
+              }
+              step = 6;
+              showNextInstruction();
+            } else {
+              appendInstruction("Try: ls -A");
+            }
+          } else if (step === 6) {
+            if (cmd === "cd ~") {
+              path = ["Harvard-Westlake"];
+              updatePrompt();
+              appendInstruction(
+                'Now type "ls -A" to see what is inside this folder.'
+              );
+              step = 7;
+            } else {
+              appendInstruction("Try: cd ~");
+            }
+          } else if (step === 7) {
+            if (cmd === "ls -A") {
+              var items7 = listCurrent(false);
+              for (var i7 = 0; i7 < items7.length; i7++) {
+                appendRawLine(
+                  '<span class="ls-dir">' + escapeHtml(items7[i7]) + "</span>"
+                );
+              }
+              step = 8;
+              showNextInstruction();
+            } else {
+              appendInstruction("Try: ls -A");
+            }
+          } else if (step === 8) {
+            if (cmd === "cd Seaver") {
+              path = ["Harvard-Westlake", "Seaver"];
+              updatePrompt();
+              appendInstruction(
+                'Now type "ls -A" to see what is inside this folder.'
+              );
+              step = 9;
+            } else {
+              appendInstruction("Try: cd Seaver");
+            }
+          } else if (step === 9) {
+            if (cmd === "ls -A") {
+              var items9 = listCurrent(false);
+              for (var i9 = 0; i9 < items9.length; i9++) {
+                appendRawLine(
+                  '<span class="ls-dir">' + escapeHtml(items9[i9]) + "</span>"
+                );
+              }
+              step = 10;
+              showNextInstruction();
+            } else {
+              appendInstruction("Try: ls -A");
+            }
+          } else {
+            // Free practice: accept commands silently without guidance
+            if (cmd === "ls -A") {
+              var itemsF = listCurrent(false);
+              for (var iF = 0; iF < itemsF.length; iF++) {
+                appendRawLine(
+                  '<span class="ls-dir">' + escapeHtml(itemsF[iF]) + "</span>"
+                );
+              }
+            } else if (cmd === "cd ..") {
+              if (path.length > 1) path.pop();
+              updatePrompt();
+            } else if (cmd === "cd ~") {
+              path = ["Harvard-Westlake"];
+              updatePrompt();
+            } else if (cmd.indexOf("cd ") === 0) {
+              var tgt = cmd.slice(3).trim();
+              var dirs = listCurrent(false);
+              if (dirs.indexOf(tgt) !== -1) {
+                path.push(tgt);
+                updatePrompt();
+              }
+            } else {
+              // ignore
+            }
+          }
+
+          input.value = "";
+        });
+      })();
+    </script>
   </body>
-  </html>
-
-
+</html>

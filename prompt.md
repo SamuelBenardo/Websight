@@ -1,3 +1,111 @@
+## 2025-11-16 (Prompt 16)
+
+Lets scrap that explanation and try again. First of all lets change the file system to: Harvard-Westlake (root), Harvard-Westlake/Chalmers, Harvard-Westlake/Seaver, Harvard-Westlake/Chalmers/StudentLounge, Harvard-Westlake/Chalmers/UpperChalmers, Harvard-Westlake/Chalmers/UpperChalmers/Chalmers305. Let the working directory for the ls -l example be Harvard-Westlake/Chalmers. After the file and directory (first) paragraph, make another paragraph that explains cd filepath, cd .., and cd ~. Then prompt the user to try it themselves the same way we do for ls -l in a seperate mini terminal, right after the cd paragraph. The file system should be the same, but let the working directory be the root. This terminal should prompt the user to cd into different directories, so that they have to use the three different cd commands at least once. After each cd, prompt the user to use ls -a to see where they are in the file system.
+
+Summary (2 sentences):
+I will switch the fake filesystem to the Harvard‑Westlake structure and set the ls -l terminal’s working directory to Chalmers. I’ll add a cd paragraph and a second terminal that guides users through cd name, cd .., and cd ~ steps, prompting them to run ls -a after each move.
+
+---
+
+## 2025-11-16 (Prompt 15)
+
+now that we hid the scrollbar when the terminal is maximized, recall the issue of the buttons being to far to the right when maximized, that was becuase the scrollbar was in the way, move them back
+
+Summary (2 sentences):
+I will remove the extra right offset applied to the controls in maximized mode so they align with the default right spacing. With the page scrollbar hidden, the buttons will sit correctly at the top-right.
+
+---
+
+## 2025-11-16 (Prompt 14)
+
+yes, make it so that the windows scrollbar is hidden whem the terminal is maximized
+
+Summary (2 sentences):
+I will hide the page scrollbar when the terminal is maximized and restore it on exit. This is done by toggling document body overflow in the maximize/restore code.
+
+---
+
+## 2025-11-16 (Prompt 13)
+
+now the bar is a little to thick and needs to be thinned again a little bit. Maybe it helps to use the spacing between the top of the terminal and the top of the buttons as a guide to mirror from the bottom of the buttons to the bottom of the gray bar. Also now, when minimized the buttons arent up down centered on the line, it could help again to think of spacing.
+
+Summary (2 sentences):
+I will reduce the header bar’s vertical padding for a thinner, balanced look and ensure the controls are vertically centered in both normal and minimized states. I’ll center the controls using translateY(-50%) so spacing mirrors above and below the buttons.
+
+---
+
+## 2025-11-16 (Prompt 12)
+
+the little gray bar on top that sections off the buttons is a little short now, instead of enclosing the buttons it cuts through them, extend it back to how it was. Also the buttons are a little too close to the scroll bar on the right of my screen when the terminal is maximized, when the terminal is maximized, just move them a little to the left.
+
+Summary (2 sentences):
+I will increase the terminal header’s minimum height so it fully contains the buttons. I will also offset the controls slightly to the left when maximized to avoid the scrollbar.
+
+---
+
+## 2025-11-16 (Prompt 11)
+
+A few small adjustemtns: the minimize, maximize, restore buttons should ALWAYS be in the top RIGHT, not just when the terminal is minimized. Also, the button's symbols arent centered on the up down axis, rather they seem shifted down a little, move them up a little to center them. Also the maximize button square symbol looks a little small, make it a little bigger.
+
+Summary (2 sentences):
+I will pin the terminal controls to the top-right in all states, vertically center the glyphs, and slightly increase the maximize icon size. These changes will affect only the terminal’s header CSS and button markup for consistent alignment.
+
+---
+
+## 2025-11-16 (Prompt 10)
+
+Add two buttons, minimize and maximize, to the top right corner of the terminal. It shoud look exactly like how ubuntu looks like on a windows pc. The minimize function to the terminal, that reduces the terminal to a size of one line of text yet with the same format, that has text on the left summarizing its demo, in this case something like "ls -l example", and the minimze maximize buttons explained earlier on the right, except the minimize button should change apperance to incicate it will restore the terminal to its original size. The maximize function, should maximize the size of the terminal to the full size of the website, and then change the maximize button to indicate that it now restores the terminal to its original size.
+
+Summary (2 sentences):
+I will add top-right minimize and maximize controls styled like Ubuntu on Windows. Minimize collapses to a one-line summary (“ls -l example”) with a restore icon; maximize expands to full-page overlay with a restore icon.
+
+---
+
+## 2025-11-16 (Prompt 9)
+
+Bolding the first occurance of key terms is a trend we should keep doing throughout the entire website. Next we will introduce the idea of a mini terminal to the website. After the rwx paragraph, write a short paragraph expaing the function of ls -l, because it will be useful in showing what each following method that changes information to do with file permissions did. The end of the paragrapg should prompt the user to type ls -l in the below terminal and press enter. Then create a mini terminal that should look exactly what a wsl ubuntu terminal would look like if windowed to a size of width of the text width. It should function so that the user is in a fake file system, in a random directory, so that when ls -l is run, it will show what ls -l would in an actual terminal. If the user types something else, instead of showing an error, or running whatever other valid command, just prompt the user to try again.
+
+Summary (2 sentences):
+I will keep bolding the first mention of key terms, add a concise paragraph introducing ls -l that ends by prompting the user to run it, and place it right after the rwx section. I will also build a WSL-like mini terminal constrained to accept ls -l and otherwise gently prompt users to try again.
+
+---
+
+## 2025-11-16 (Prompt 8)
+
+Read the prompt.md file so we can pick up from the last conversation. As instructed in the prompt.md file, keep recording these prompts. Next write three new paragraphs, bolding the first occurance of key terms, that teaches the functions (not the syntax) of chmod, chown, chgrp, and draws back to the school metaphor for each.
+
+Summary (2 sentences):
+I read `prompt.md`, confirmed newest-first logging, and recorded this prompt with a brief plan. I will add three paragraphs to the site explaining the functions of chmod, chown, and chgrp, bolding each term on first mention and tying each to the school metaphor.
+
+---
+
+## 2025-11-13 (Prompt 7)
+
+Seperate owner, group, other, and read, write, execute, into two parageaphs, and seperate rwx meaning for file and directory with their own sentences. Also bold the words, file, directory, owner, group, other, read, write, execute, the first time they appear. Do this quickly
+
+Summary (2 sentences):
+I will split the explanations into two paragraphs, bold the first appearances of the requested terms, and separate the file and directory meanings into their own sentences. I will apply these edits immediately after the intro paragraph.
+
+---
+
+## 2025-11-13 (Prompt 6)
+
+Now Explain the basic owner, group, other, read write execute in another paragraph.
+
+Summary (2 sentences):
+I will add a new paragraph that explains owner, group, others, and read, write, execute in clear full sentences without shorthand. I will place it directly after the introductory paragraph on the page.
+
+---
+
+## 2025-11-13 (Prompt 5)
+
+Bullet points are fine but everything should be in a full sentence, no shorthand. Rewrite and expand in this way. Scrap the 1, 2, 3, 4 etc. order that the conversation presented, lets go by theme. Lets also scrap all the writingwe have so far, reset, and just keep it as refernece in our head. The first paragraph should be explaining what a file and directory are, first technically, then with the school metaphor you use. Write that paragraph and nothing else.
+
+Summary (2 sentences):
+I will reset the page and write only the first paragraph that defines files and directories first in technical terms and then with the school metaphor, using full sentences and no shorthand. I will continue logging prompts newest-first and expand thematically in later steps as you request.
+
+---
+
 ## 2025-11-13 (Prompt 4)
 
 Im going to gradually ask you to edit this text. Also, in the prompt.md file, the order is 1, 3, 2. fix this by going in order of 3, 2, 1 (top to bottom) and keep this order as we go. Rewrite the entire text, because right now I think you are relying too much on the conversation. Use your intuition as well for wording, formatting, ordering, explaining, and all.
