@@ -1,3 +1,66 @@
+## 2025-11-17 (Prompt 23)
+
+continue to store prompts in the @prompt.md file. Now, make a fakeFileSystem.md, that contains the filesystem in the exact way I layed out to you in prompt 22
+
+Summary (2 sentences):
+I will keep logging prompts newest‑first in `prompt.md` and add a new `fakeFileSystem.md` that reproduces the full campus filesystem exactly as specified in Prompt 22. This file will be a plain, copyable tree for reference and future updates.
+
+---
+
+## 2025-11-16 (Prompt 22)
+
+I want to update the mock filesystem we have across ALL terminals. You will need to update the demos accordingly too. Note that the demo does not need to make use of the entire system. In fact it should be as concise as possible, using only as many prompts as needed to verify the users understanding of each new command learned. Here is the new system, file contents are also provided: Harvard‑Westlake/ … [full campus tree provided in prompt].
+
+Summary (2 sentences):
+I will swap every terminal’s mock filesystem to the provided Harvard‑Westlake structure and adjust each demo to be concise while still validating understanding. I will keep post‑demo free practice progressive so later terminals accept all previously learned commands.
+
+---
+
+## 2025-11-16 (Prompt 21)
+
+the text still doesnt seem to have disapperead. if the text doesnt serve a purpose, just delete it, but if it was an important part of the terminal code, keep trying to fix the problem
+
+Summary (2 sentences):
+I found the missing opening script tag that caused the CD terminal code to render as text and wrapped the block correctly. I kept only necessary code and retained progressive free‑practice rules afterward.
+
+---
+
+## 2025-11-16 (Prompt 20)
+
+link this new website to the projects section of the aboutsamuel main website so that it is online and seeable to the public
+
+Summary (2 sentences):
+I added a new “File Permissions Guide” project card above Whack‑A‑Mole in `projects.html` with an embedded preview and a button linking to the guide. I kept all styling to existing `site.css` classes so it deploys cleanly.
+
+---
+
+## 2025-11-16 (Prompt 19)
+
+I meant the summary to be top left not top right. Also the cd terminal doesnt prompt the user to be able to keep using it for themselves, and the terminal stops working completely after the demo. make it so it keeps working, like how the ls-l one does.
+
+Summary (2 sentences):
+I moved the terminal summary to the top‑left in all states (normal, minimized, maximized). I also ensured the CD terminal continues to accept commands after the demo, matching the ls‑l terminal’s free‑practice behavior.
+
+---
+
+## 2025-11-16 (Prompt 18)
+
+In the screenshot above, there appears to be some code, shown as text on the website undernath the ch... mini terminal. That said the terminal seems to work fine so Im not sure if the text is needed or was part of something else. Figure out if you made a mistake here and fix it. Then make it so that in the post-demo section of the miniterminal, and only the post section, the user can use all commands that were learned in previous terminals, further up in the website, and only those, this should be true far all ensuing terminals that we create too, so that both knowledge, and user power grows as you scroll down the page.
+
+Summary (2 sentences):
+I corrected the rendering bug (stray code) and enforced cumulative free‑practice: each later terminal accepts all previously learned commands, earlier terminals accept only what they taught. This grows user capability as they scroll.
+
+---
+
+## 2025-11-16 (Prompt 17)
+
+I changed my mind again, lets change ls -A to just ls, the less complicated for a new user the better. Be sure to update this in the terminal as well as the text. Then make another mini terminal after the ch.... paragraphs that is a demo of those commands.
+
+Summary (2 sentences):
+I updated the CD paragraph and terminal to use ls (instead of ls -A) in prompts and behavior. I also added a new mini terminal after the chmod/chown/chgrp paragraphs to demo those commands succinctly.
+
+---
+
 ## 2025-11-16 (Prompt 16)
 
 Lets scrap that explanation and try again. First of all lets change the file system to: Harvard-Westlake (root), Harvard-Westlake/Chalmers, Harvard-Westlake/Seaver, Harvard-Westlake/Chalmers/StudentLounge, Harvard-Westlake/Chalmers/UpperChalmers, Harvard-Westlake/Chalmers/UpperChalmers/Chalmers305. Let the working directory for the ls -l example be Harvard-Westlake/Chalmers. After the file and directory (first) paragraph, make another paragraph that explains cd filepath, cd .., and cd ~. Then prompt the user to try it themselves the same way we do for ls -l in a seperate mini terminal, right after the cd paragraph. The file system should be the same, but let the working directory be the root. This terminal should prompt the user to cd into different directories, so that they have to use the three different cd commands at least once. After each cd, prompt the user to use ls -a to see where they are in the file system.
