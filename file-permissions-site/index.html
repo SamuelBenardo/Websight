@@ -60,6 +60,18 @@
         font-style: italic;
         margin: 12px 0;
       }
+      /* Inline, borderless editing next to the prompt */
+      .term-line .term-input-editable {
+        display: inline-block;
+        min-width: 1ch;
+        outline: none;
+        border: none;
+        background: transparent;
+        color: inherit;
+        font: inherit;
+        white-space: pre;
+        caret-color: #cccccc;
+      }
       .term-input input {
         flex: 1;
         background: transparent;
@@ -77,35 +89,33 @@
   <body>
     <div class="term" id="term">
       <div class="term-screen" id="screen" aria-live="polite"></div>
-      <div class="term-input">
-        <span class="term-prompt" id="prompt"
-          ><span class="prompt-userhost">hwwolverine@DESKTOP-WSL</span>:<span
-            class="prompt-path"
-            >~/Harvard-Westlake</span
-          ><span class="prompt-dollar">$</span></span
-        >
-        <input
-          id="cmd"
-          type="text"
-          spellcheck="false"
-          autocomplete="off"
-          aria-label="Terminal command input"
-        />
-      </div>
     </div>
 
     <script>
       (function () {
         var screen = document.getElementById("screen");
-        var input = document.getElementById("cmd");
-        var promptEl = document.getElementById("prompt");
+        var input = null; // dynamically created per prompt line
+        var activeLineEl = null;
         var term = document.getElementById("term");
+        var currentUserhost = "hwwolverine@DESKTOP-WSL";
+        var currentPathText = "~/Harvard-Westlake";
 
         function escapeHtml(s) {
           return String(s)
             .replace(/&/g, "&amp;")
             .replace(/</g, "&lt;")
             .replace(/>/g, "&gt;");
+        }
+        function getPromptHtml() {
+          return (
+            '<span class="prompt-userhost">' +
+            escapeHtml(currentUserhost) +
+            "</span>:" +
+            '<span class="prompt-path">' +
+            escapeHtml(currentPathText) +
+            "</span>" +
+            '<span class="prompt-dollar">$</span>'
+          );
         }
         function appendLine(text) {
           screen.insertAdjacentHTML(
@@ -129,22 +139,44 @@
           screen.scrollTop = screen.scrollHeight;
         }
         function updatePrompt(userhost, pathText) {
-          promptEl.innerHTML =
-            '<span class="prompt-userhost">' +
-            escapeHtml(userhost) +
-            "</span>:" +
-            '<span class="prompt-path">' +
-            escapeHtml(pathText) +
-            "</span>" +
-            '<span class="prompt-dollar">$</span>';
+          currentUserhost = userhost;
+          currentPathText = pathText;
+          // Update the visible current prompt, if present
+          if (activeLineEl) {
+            var promptSpan = activeLineEl.querySelector(".term-prompt");
+            if (promptSpan) promptSpan.innerHTML = getPromptHtml();
+          }
+        }
+        function createInputLine() {
+          var line = document.createElement("div");
+          line.className = "term-line";
+          line.innerHTML =
+            '<span class="term-prompt">' +
+            getPromptHtml() +
+            "</span> " +
+            '<span class="term-input-editable" contenteditable="true" spellcheck="false" role="textbox" aria-label="Terminal command input"></span>';
+          screen.appendChild(line);
+          activeLineEl = line;
+          input = line.querySelector(".term-input-editable");
+          input.addEventListener("keydown", onKeyDown);
+          screen.scrollTop = screen.scrollHeight;
+          input.focus();
+        }
+        function finalizeCurrentInput(raw) {
+          if (!activeLineEl) return;
+          var promptHtml = '<span class="term-prompt">' + getPromptHtml() + "</span>";
+          var suffix = raw && raw.length ? " " + escapeHtml(raw) : "";
+          activeLineEl.innerHTML = promptHtml + suffix;
+          activeLineEl = null;
+          input = null;
         }
 
         // Focus input on load and on screen click
         window.addEventListener("load", function () {
-          input.focus();
+          if (input) input.focus();
         });
         term.addEventListener("click", function () {
-          input.focus();
+          if (input) input.focus();
         });
 
         // ===== Lesson Content (HTML, bold preserved) =====
@@ -166,7 +198,7 @@
 
         // ===== Unified Flow State =====
         var sectionIndex = 0;
-        var paragraphIndex = -2; // use -2/-1 for intro welcome lines before first paragraph
+        var paragraphIndex = -1; // start so first Enter shows the first sentence
         var mode = "text"; // text | demo-cd | demo-ls | demo-ch | end
 
         // Welcome lines (auto shown)
@@ -174,7 +206,7 @@
           "<strong>Welcome!</strong> This terminal will teach you <strong>file permissions</strong> step by step."
         );
         appendInstructionHtml(
-          "Type any character and press Enter to continue through the lesson."
+          "Press Enter to continue through the lesson."
         );
 
         // ===== Demo 1: cd practice =====
@@ -826,13 +858,13 @@
             sectionIndex = 1;
             paragraphIndex = -1;
             mode = "text";
-            appendInstructionHtml("Type any character and press Enter to continue the lesson.");
+            appendInstructionHtml("Press Enter to continue the lesson.");
           } else if (mode === "demo-ls") {
             // After ls demo, show section 3 (chmod/chown/chgrp), then ch demo
             sectionIndex = 2;
             paragraphIndex = -1;
             mode = "text";
-            appendInstructionHtml("Type any character and press Enter to continue the lesson.");
+            appendInstructionHtml("Press Enter to continue the lesson.");
           }
         }
 
@@ -854,24 +886,21 @@
         }
 
         // Handle input
-        input.addEventListener("keydown", function (e) {
+        function onKeyDown(e) {
           if (e.key !== "Enter") return;
           e.preventDefault();
-          var raw = input.value;
+          var raw = (input.textContent || "").replace(/\r?\n/g, "");
           var cmd = raw.trim();
 
-          // Always echo
-          appendRawLine(promptEl.innerHTML + " " + escapeHtml(raw));
+          // finalize the current input line to look like a real terminal
+          finalizeCurrentInput(raw);
 
           if (mode === "text") {
-            if (cmd.length === 0) {
-              appendInstructionHtml("Type any character and press Enter to continue.");
-              input.value = "";
-              return;
-            }
             paragraphIndex++;
             var group = textSections[sectionIndex] || [];
-            if (paragraphIndex < group.length) {
+            if (paragraphIndex < 0) {
+              // advancing through preface lines; no output
+            } else if (paragraphIndex < group.length) {
               appendInstructionHtml(group[paragraphIndex]);
               if (sectionIndex === 0 && paragraphIndex === group.length - 1) {
                 appendInstructionHtml(
@@ -900,11 +929,13 @@
             // free typing after lesson ends; no-op
           }
 
-          input.value = "";
-        });
+          // after processing, create a fresh prompt line
+          createInputLine();
+        }
 
         // Initial prompt
         updatePrompt("hwwolverine@DESKTOP-WSL", "~/Harvard-Westlake");
+        createInputLine();
       })();
     </script>
   </body>
