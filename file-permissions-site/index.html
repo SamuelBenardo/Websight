@@ -99,6 +99,7 @@
         var term = document.getElementById("term");
         var currentUserhost = "hwwolverine@DESKTOP-WSL";
         var currentPathText = "~/Harvard-Westlake";
+        var hideInput = false; // hide echo for secure input (sudo password)
 
         function escapeHtml(s) {
           return String(s)
@@ -164,8 +165,12 @@
         }
         function finalizeCurrentInput(raw) {
           if (!activeLineEl) return;
-          var promptHtml = '<span class="term-prompt">' + getPromptHtml() + "</span>";
-          var suffix = raw && raw.length ? " " + escapeHtml(raw) : "";
+          var promptHtml =
+            '<span class="term-prompt">' + getPromptHtml() + "</span>";
+          var suffix = "";
+          if (!hideInput && raw && raw.length) {
+            suffix = " " + escapeHtml(raw);
+          }
           activeLineEl.innerHTML = promptHtml + suffix;
           activeLineEl = null;
           input = null;
@@ -182,17 +187,20 @@
         // ===== Lesson Content (HTML, bold preserved) =====
         var textSections = [
           [
-            'A <strong>file</strong> contains data that your operating system (Windows, Linux, macOS, etc.) stores. A <strong>directory</strong> is a special kind of record that stores a list of names and references to those files and/or other directories so the system can organize everything. Imagine in a school, a file is a single room that holds its materials. A directory is a hallway that leads to or contains rooms, as well as branches off into other hallways. This system of rooms and hallways is a <strong>tree</strong>. In the Harvard-Westlake school metaphor, the school campus is the root of the tree, which branches out into buildings (Chalmers, Seaver, etc.), and then further into rooms (Student Lounge) and hallways (Upper Chalmers), that contain their own rooms (Chalmers 305).',
-            '<strong>cd</strong> changes your working location. Use <strong>cd filepath</strong> to move into a folder; <strong>cd ..</strong> goes up to the parent; <strong>cd ~</strong> jumps to your home (here, the campus root). After you change location, <strong>ls</strong> shows what’s inside the current directory.',
+            "A <strong>file</strong> contains data that your operating system (Windows, Linux, macOS, etc.) stores. A <strong>directory</strong> is a special kind of record that stores a list of names and references to those files and/or other directories so the system can organize everything. Imagine in a school, a file is a single room that holds its materials. A directory is a hallway that leads to or contains rooms, as well as branches off into other hallways. This system of rooms and hallways is a <strong>tree</strong>. In the Harvard-Westlake school metaphor, the school campus is the root of the tree, which branches out into buildings (Chalmers, Seaver, etc.), and then further into rooms (Student Lounge) and hallways (Upper Chalmers), that contain their own rooms (Chalmers 305).",
+            "<strong>cd</strong> changes your working location. Use <strong>cd filepath</strong> to move into a folder; <strong>cd ..</strong> goes up to the parent; <strong>cd ~</strong> jumps to your home (here, the campus root). After you change location, <strong>ls</strong> shows what’s inside the current directory.",
           ],
           [
-            'Every file and directory belongs to an <strong>owner</strong>, which is a single user account responsible for it; it also belongs to a <strong>group</strong>, which is a named team of user accounts, and everyone else on the system is treated as <strong>other</strong>. In the school picture, imagine the Harvard-Westlake school as one person, the owner is that one person who owns a given room, or hallway. The group could for example be the student body, who is also given certain privleges in the room, or hallway. Finally, other(s) are the general public, who may only be granted access to the room or hallway during a public Harvard-Westlake event. The system checks three basic actions for each of these audiences: <strong>read</strong>, <strong>write</strong>, and <strong>execute</strong>. On a file, read means you may view the contents, write means you may change the contents, and execute means you may run it as a program if it is runnable. On a directory, read means you may list the names inside, write means you may add, rename, or remove entries, and execute means you may enter it and move through it when you already know the name of something inside.',
-            '<strong>ls -l</strong> shows a “long listing” of the current directory: each item on its own line with its permissions, number of links, owner, group, size, last modified time, and name. This is like reading the hallway roster that lists each room with its posted rules and who is responsible.',
+            "Every file and directory belongs to an <strong>owner</strong>, which is a single user account responsible for it; it also belongs to a <strong>group</strong>, which is a named team of user accounts, and everyone else on the system is treated as <strong>other</strong>. In the school picture, imagine the Harvard-Westlake school as one person, the owner is that one person who owns a given room, or hallway. The group could for example be the student body, who is also given certain privleges in the room, or hallway. Finally, other(s) are the general public, who may only be granted access to the room or hallway during a public Harvard-Westlake event. The system checks three basic actions for each of these audiences: <strong>read</strong>, <strong>write</strong>, and <strong>execute</strong>. On a file, read means you may view the contents, write means you may change the contents, and execute means you may run it as a program if it is runnable. On a directory, read means you may list the names inside, write means you may add, rename, or remove entries, and execute means you may enter it and move through it when you already know the name of something inside.",
+            "<strong>ls -l</strong> shows a “long listing” of the current directory: each item on its own line with its permissions, number of links, owner, group, size, last modified time, and name. This is like reading the hallway roster that lists each room with its posted rules and who is responsible.",
           ],
           [
-            '<strong>chmod</strong> changes the rules themselves—who may read, who may write, and who may execute, without changing who owns a file or which group it belongs to. In the school picture, this is like updating the sign on a room’s door: “Teachers may rearrange desks,” “Club members may come in after school,” “Guests may only observe.” The people and clubs don’t change; the posted rules for owner, group, and others do.',
-            '<strong>chown</strong> changes who is officially responsible for a file or directory by transferring its owner to a different user account. In the school picture, this is like handing the keys and responsibility for a room from one teacher to another; the room may keep the same posted rules, but the person who counts as “the owner” for permission checks is now different.',
-            '<strong>chgrp</strong> changes which team a file or directory is associated with by switching its group. In the school picture, this is like reassigning a room from the Chess Club to the Debate Team; the “group rules” on the door still say what that group may do, but they now apply to the new club rather than the old one.',
+            "<strong>chmod</strong> changes the rules themselves—who may read, who may write, and who may execute, without changing who owns a file or which group it belongs to. In the school picture, this is like updating the sign on a room’s door: “Teachers may rearrange desks,” “Club members may come in after school,” “Guests may only observe.” The people and clubs don’t change; the posted rules for owner, group, and others do.",
+            "<strong>chown</strong> changes who is officially responsible for a file or directory by transferring its owner to a different user account. In the school picture, this is like handing the keys and responsibility for a room from one teacher to another; the room may keep the same posted rules, but the person who counts as “the owner” for permission checks is now different.",
+            "<strong>chgrp</strong> changes which team a file or directory is associated with by switching its group. In the school picture, this is like reassigning a room from the Chess Club to the Debate Team; the “group rules” on the door still say what that group may do, but they now apply to the new club rather than the old one.",
+          ],
+          [
+            "Sometimes you need elevated privileges to perform actions on files or directories you do not own. The <strong>sudo</strong> command temporarily runs a command with administrator (root) privileges. For example, if you try to change permissions on a directory owned by someone else, a normal <strong>chmod</strong> will fail with “Operation not permitted.” Prefixing the same command with <strong>sudo</strong> allows it—after authenticating—to proceed so you can, for example, grant <strong>read</strong> and <strong>execute</strong> access where appropriate.",
           ],
         ];
 
@@ -205,9 +213,7 @@
         appendInstructionHtml(
           "<strong>Welcome!</strong> This terminal will teach you <strong>file permissions</strong> step by step."
         );
-        appendInstructionHtml(
-          "Press Enter to continue through the lesson."
-        );
+        appendInstructionHtml("Press Enter to continue through the lesson.");
 
         // ===== Demo 1: cd practice =====
         var cd = (function () {
@@ -228,7 +234,9 @@
                   ThirdFloor: { children: {} },
                 },
               },
-              SeaverAcademicCenter: { children: { SecondFloor: { children: {} } } },
+              SeaverAcademicCenter: {
+                children: { SecondFloor: { children: {} } },
+              },
             },
           };
           function getNode(arr) {
@@ -252,8 +260,12 @@
 
           function start() {
             mode = "demo-cd";
-            appendInstructionHtml('<span class="title-line"><strong>cd practice</strong></span>');
-            appendInstructionHtml("Follow the prompts to practice cd and ls. When free practice begins, type <strong>q</strong> and press Enter to continue the lesson.");
+            appendInstructionHtml(
+              '<span class="title-line"><strong>cd practice</strong></span>'
+            );
+            appendInstructionHtml(
+              "Follow the prompts to practice cd and ls. When free practice begins, type <strong>q</strong> and press Enter to continue the lesson."
+            );
             updatePrompt("hwwolverine@DESKTOP-WSL", promptPath());
             showNext();
           }
@@ -273,23 +285,42 @@
             if (step < lines.length) {
               appendInstructionHtml(lines[step]);
             } else {
-              appendInstructionHtml("All set! Free practice: use cd and ls. Type <strong>q</strong> to exit.");
+              appendInstructionHtml(
+                "All set! Free practice: use cd and ls. Type <strong>q</strong> to exit."
+              );
               free = true;
             }
           }
           function onEnter(cmd) {
             if (!free) {
+              // Developer bypass: 's' runs the expected next instruction
+              if (cmd === "s") {
+                if (step === 0) cmd = "cd ChalmersHall";
+                else if (step === 1) cmd = "ls";
+                else if (step === 2) cmd = "cd SecondFloor";
+                else if (step === 3) cmd = "ls";
+                else if (step === 4) cmd = "cd ..";
+                else if (step === 5) cmd = "ls";
+                else if (step === 6) cmd = "cd ~";
+                else if (step === 7) cmd = "ls";
+                else if (step === 8) cmd = "cd SeaverAcademicCenter";
+                else if (step === 9) cmd = "ls";
+              }
               if (step === 0) {
                 if (cmd === "cd ChalmersHall") {
                   path.push("ChalmersHall");
                   updatePrompt("hwwolverine@DESKTOP-WSL", promptPath());
                   step = 1;
-                  appendInstructionHtml('Now type "ls" to see what is inside this folder.');
+                  appendInstructionHtml(
+                    'Now type "ls" to see what is inside this folder.'
+                  );
                 } else appendInstructionHtml("Try: cd ChalmersHall");
               } else if (step === 1) {
                 if (cmd === "ls") {
                   listCurrent().forEach(function (n) {
-                    appendRawLine('<span class="ls-dir">' + escapeHtml(n) + "</span>");
+                    appendRawLine(
+                      '<span class="ls-dir">' + escapeHtml(n) + "</span>"
+                    );
                   });
                   step = 2;
                   showNext();
@@ -299,12 +330,16 @@
                   path.push("SecondFloor");
                   updatePrompt("hwwolverine@DESKTOP-WSL", promptPath());
                   step = 3;
-                  appendInstructionHtml('Now type "ls" to see what is inside this folder.');
+                  appendInstructionHtml(
+                    'Now type "ls" to see what is inside this folder.'
+                  );
                 } else appendInstructionHtml("Try: cd SecondFloor");
               } else if (step === 3) {
                 if (cmd === "ls") {
                   listCurrent().forEach(function (n) {
-                    appendRawLine('<span class="ls-dir">' + escapeHtml(n) + "</span>");
+                    appendRawLine(
+                      '<span class="ls-dir">' + escapeHtml(n) + "</span>"
+                    );
                   });
                   step = 4;
                   showNext();
@@ -314,12 +349,16 @@
                   if (path.length > 1) path.pop();
                   updatePrompt("hwwolverine@DESKTOP-WSL", promptPath());
                   step = 5;
-                  appendInstructionHtml('Now type "ls" to see what is inside this folder.');
+                  appendInstructionHtml(
+                    'Now type "ls" to see what is inside this folder.'
+                  );
                 } else appendInstructionHtml("Try: cd ..");
               } else if (step === 5) {
                 if (cmd === "ls") {
                   listCurrent().forEach(function (n) {
-                    appendRawLine('<span class="ls-dir">' + escapeHtml(n) + "</span>");
+                    appendRawLine(
+                      '<span class="ls-dir">' + escapeHtml(n) + "</span>"
+                    );
                   });
                   step = 6;
                   showNext();
@@ -329,12 +368,16 @@
                   path = ["Harvard-Westlake"];
                   updatePrompt("hwwolverine@DESKTOP-WSL", promptPath());
                   step = 7;
-                  appendInstructionHtml('Now type "ls" to see what is inside this folder.');
+                  appendInstructionHtml(
+                    'Now type "ls" to see what is inside this folder.'
+                  );
                 } else appendInstructionHtml("Try: cd ~");
               } else if (step === 7) {
                 if (cmd === "ls") {
                   listCurrent().forEach(function (n) {
-                    appendRawLine('<span class="ls-dir">' + escapeHtml(n) + "</span>");
+                    appendRawLine(
+                      '<span class="ls-dir">' + escapeHtml(n) + "</span>"
+                    );
                   });
                   step = 8;
                   showNext();
@@ -344,12 +387,16 @@
                   path = ["Harvard-Westlake", "SeaverAcademicCenter"];
                   updatePrompt("hwwolverine@DESKTOP-WSL", promptPath());
                   step = 9;
-                  appendInstructionHtml('Now type "ls" to see what is inside this folder.');
+                  appendInstructionHtml(
+                    'Now type "ls" to see what is inside this folder.'
+                  );
                 } else appendInstructionHtml("Try: cd SeaverAcademicCenter");
               } else if (step === 9) {
                 if (cmd === "ls") {
                   listCurrent().forEach(function (n) {
-                    appendRawLine('<span class="ls-dir">' + escapeHtml(n) + "</span>");
+                    appendRawLine(
+                      '<span class="ls-dir">' + escapeHtml(n) + "</span>"
+                    );
                   });
                   step = 10;
                   showNext();
@@ -363,7 +410,9 @@
               }
               if (cmd === "ls") {
                 listCurrent().forEach(function (n) {
-                  appendRawLine('<span class="ls-dir">' + escapeHtml(n) + "</span>");
+                  appendRawLine(
+                    '<span class="ls-dir">' + escapeHtml(n) + "</span>"
+                  );
                 });
               } else if (cmd === "cd ..") {
                 if (path.length > 1) path.pop();
@@ -553,8 +602,12 @@
           var free = false;
           function start() {
             mode = "demo-ls";
-            appendInstructionHtml('<span class="title-line"><strong>ls -l practice</strong></span>');
-            appendInstructionHtml("Follow the prompts. When free practice begins, type <strong>q</strong> and press Enter to continue the lesson.");
+            appendInstructionHtml(
+              '<span class="title-line"><strong>ls -l practice</strong></span>'
+            );
+            appendInstructionHtml(
+              "Follow the prompts. When free practice begins, type <strong>q</strong> and press Enter to continue the lesson."
+            );
             updatePromptPath();
             showNext();
           }
@@ -579,12 +632,23 @@
                 appendInstructionHtml("Try: ls -l");
                 break;
               default:
-                appendInstructionHtml("All set! Free practice: use cd and ls -l. Type <strong>q</strong> to exit.");
+                appendInstructionHtml(
+                  "All set! Free practice: use cd and ls -l. Type <strong>q</strong> to exit."
+                );
                 free = true;
             }
           }
           function onEnter(cmd) {
             if (!free) {
+              // Developer bypass: 's' runs the expected next instruction
+              if (cmd === "s") {
+                if (step === 0) cmd = "ls -l";
+                else if (step === 1) cmd = "cd StudentLounge";
+                else if (step === 2) cmd = "ls -l";
+                else if (step === 3) cmd = "cd ..";
+                else if (step === 4) cmd = "cd Cafeteria";
+                else if (step === 5) cmd = "ls -l";
+              }
               if (step === 0) {
                 if (cmd === "ls -l") {
                   lsLong();
@@ -711,7 +775,11 @@
               return set.length ? set : [0];
             }
             function bits(p) {
-              return { r: p.indexOf("r") !== -1, w: p.indexOf("w") !== -1, x: p.indexOf("x") !== -1 };
+              return {
+                r: p.indexOf("r") !== -1,
+                w: p.indexOf("w") !== -1,
+                x: p.indexOf("x") !== -1,
+              };
             }
             var b = bits(perms);
             var targets = idxs(who);
@@ -731,15 +799,20 @@
                 tri[2] = b.x ? "x" : "-";
               }
             }
-            file.mode = "-" + parts[0].join("") + parts[1].join("") + parts[2].join("");
+            file.mode =
+              "-" + parts[0].join("") + parts[1].join("") + parts[2].join("");
             return true;
           }
           var step = 0;
           var free = false;
           function start() {
             mode = "demo-ch";
-            appendInstructionHtml('<span class="title-line"><strong>chmod, chown, chgrp practice</strong></span>');
-            appendInstructionHtml("Follow the prompts. When free practice begins, type <strong>q</strong> and press Enter to continue the lesson.");
+            appendInstructionHtml(
+              '<span class="title-line"><strong>chmod, chown, chgrp practice</strong></span>'
+            );
+            appendInstructionHtml(
+              "Follow the prompts. When free practice begins, type <strong>q</strong> and press Enter to continue the lesson."
+            );
             updatePromptPath();
             showNext();
           }
@@ -752,27 +825,27 @@
                 appendInstructionHtml("Try: chmod u+x demo.sh");
                 break;
               case 2:
-                appendInstructionHtml("Try: ls -l");
-                break;
-              case 3:
                 appendInstructionHtml("Try: chown teacher_lee demo.sh");
                 break;
-              case 4:
-                appendInstructionHtml("Try: ls -l");
-                break;
-              case 5:
+              case 3:
                 appendInstructionHtml("Try: chgrp faculty demo.sh");
                 break;
-              case 6:
-                appendInstructionHtml("Try: ls -l");
-                break;
               default:
-                appendInstructionHtml("All set! Free practice. Type <strong>q</strong> to exit.");
+                appendInstructionHtml(
+                  "All set! Free practice. Type <strong>q</strong> to exit."
+                );
                 free = true;
             }
           }
           function onEnter(cmd) {
             if (!free) {
+              // Developer bypass: 's' runs the expected next instruction
+              if (cmd === "s") {
+                if (step === 0) cmd = "ls -l";
+                else if (step === 1) cmd = "chmod u+x demo.sh";
+                else if (step === 2) cmd = "chown teacher_lee demo.sh";
+                else if (step === 3) cmd = "chgrp faculty demo.sh";
+              }
               if (step === 0) {
                 if (cmd === "ls -l") {
                   lsLong();
@@ -787,44 +860,26 @@
                   showNext();
                 } else appendInstructionHtml("Try: chmod u+x demo.sh");
               } else if (step === 2) {
-                if (cmd === "ls -l") {
-                  lsLong();
-                  step = 3;
-                  showNext();
-                } else appendInstructionHtml("Try: ls -l");
-              } else if (step === 3) {
                 var m1 = /^chown\s+(\S+)\s+(\S+)$/.exec(cmd);
                 if (m1 && m1[1] === "teacher_lee" && m1[2] === file.name) {
                   file.owner = "teacher_lee";
                   lsLong();
-                  step = 4;
+                  step = 3;
                   showNext();
                 } else appendInstructionHtml("Try: chown teacher_lee demo.sh");
-              } else if (step === 4) {
-                if (cmd === "ls -l") {
-                  lsLong();
-                  step = 5;
-                  showNext();
-                } else appendInstructionHtml("Try: ls -l");
-              } else if (step === 5) {
+              } else if (step === 3) {
                 var m2 = /^chgrp\s+(\S+)\s+(\S+)$/.exec(cmd);
                 if (m2 && m2[1] === "faculty" && m2[2] === file.name) {
                   file.group = "faculty";
                   lsLong();
-                  step = 6;
+                  step = 4;
                   showNext();
                 } else appendInstructionHtml("Try: chgrp faculty demo.sh");
-              } else if (step === 6) {
-                if (cmd === "ls -l") {
-                  lsLong();
-                  step = 7;
-                  showNext();
-                } else appendInstructionHtml("Try: ls -l");
               }
             } else {
               if (cmd === "q") {
                 appendInstructionHtml("Exiting demo...");
-                endLesson();
+                nextSection();
                 return;
               }
               if (cmd === "ls -l") {
@@ -852,6 +907,160 @@
           return { start: start, onEnter: onEnter };
         })();
 
+        // ===== Demo 4: sudo scenario =====
+        var sudoDemo = (function () {
+          var sudoPassword = "r7Qx9Za"; // 7-char random-looking string
+          var nav = {
+            name: "Harvard-Westlake",
+            children: {
+              ChalmersHall: { children: { RestrictedArea: { children: {} } } },
+              SeaverAcademicCenter: { children: {} },
+            },
+          };
+          var navPath = ["Harvard-Westlake", "ChalmersHall"];
+          var restrictedPerm = { otherRead: false, otherExec: false };
+          var awaitingPassword = false;
+
+          function updatePromptPath() {
+            updatePrompt("hwwolverine@DESKTOP-WSL", "~/" + navPath.join("/"));
+          }
+          function canCdRestricted() {
+            return restrictedPerm.otherExec;
+          }
+          function sudoUserName() {
+            var at = (currentUserhost || "").indexOf("@");
+            return at !== -1
+              ? currentUserhost.slice(0, at)
+              : currentUserhost || "user";
+          }
+
+          var step = 0;
+          var free = false;
+
+          function start() {
+            mode = "demo-sudo";
+            appendInstructionHtml(
+              '<span class="title-line"><strong>sudo practice</strong></span>'
+            );
+            appendInstructionHtml(
+              "Follow the prompts. When free practice begins, type <strong>q</strong> and press Enter to finish."
+            );
+            updatePromptPath();
+            showNext();
+          }
+          function showNext() {
+            switch (step) {
+              case 0:
+                appendInstructionHtml("Try: cd RestrictedArea");
+                break;
+              case 1:
+                appendInstructionHtml("Try: chmod o+r RestrictedArea");
+                break;
+              case 2:
+                appendInstructionHtml(
+                  "Try: sudo chmod o+rx RestrictedArea (password: " +
+                    sudoPassword +
+                    ")"
+                );
+                break;
+              case 3:
+                appendInstructionHtml("Try: cd RestrictedArea");
+                break;
+              default:
+                appendInstructionHtml(
+                  "All set! Free practice. Type <strong>q</strong> to exit."
+                );
+                free = true;
+            }
+          }
+          function onEnter(cmd) {
+            if (!free) {
+              // Developer bypass
+              if (cmd === "s") {
+                if (step === 0) cmd = "cd RestrictedArea";
+                else if (step === 1) cmd = "chmod o+r RestrictedArea";
+                else if (step === 2) cmd = "sudo chmod o+rx RestrictedArea";
+                else if (step === 3) cmd = "cd RestrictedArea";
+              }
+              // Handle password input if awaiting
+              if (awaitingPassword) {
+                if (cmd === sudoPassword) {
+                  restrictedPerm.otherRead = true;
+                  restrictedPerm.otherExec = true;
+                  awaitingPassword = false;
+                  hideInput = false;
+                  step = 3;
+                  showNext();
+                } else {
+                  appendLine("Sorry, try again.");
+                  appendLine("[sudo] password for " + sudoUserName() + ":");
+                  hideInput = true;
+                }
+                return;
+              }
+              if (step === 0) {
+                if (cmd === "cd RestrictedArea") {
+                  if (!canCdRestricted()) {
+                    appendLine("bash: cd: RestrictedArea: Permission denied");
+                    appendInstructionHtml(
+                      "You need execute permission to enter a directory; others don’t have it here."
+                    );
+                    step = 1;
+                    showNext();
+                  } else {
+                    navPath.push("RestrictedArea");
+                    updatePromptPath();
+                    step = 4;
+                    showNext();
+                  }
+                } else appendInstructionHtml("Try: cd RestrictedArea");
+              } else if (step === 1) {
+                if (cmd === "chmod o+r RestrictedArea") {
+                  appendLine(
+                    "chmod: changing permissions of 'RestrictedArea': Operation not permitted"
+                  );
+                  appendInstructionHtml(
+                    "You don’t own this directory. Use administrator privileges to change its permissions."
+                  );
+                  step = 2;
+                  showNext();
+                } else appendInstructionHtml("Try: chmod o+r RestrictedArea");
+              } else if (step === 2) {
+                if (cmd === "sudo chmod o+rx RestrictedArea") {
+                  appendLine("[sudo] password for " + sudoUserName() + ":");
+                  awaitingPassword = true;
+                  hideInput = true;
+                } else
+                  appendInstructionHtml(
+                    "Try: sudo chmod o+rx RestrictedArea (password: " +
+                      sudoPassword +
+                      ")"
+                  );
+              } else if (step === 3) {
+                if (cmd === "cd RestrictedArea") {
+                  if (canCdRestricted()) {
+                    navPath.push("RestrictedArea");
+                    updatePromptPath();
+                    appendInstructionHtml(
+                      "<strong>Great job!</strong> You elevated privileges appropriately and accessed the directory."
+                    );
+                    endLesson();
+                  } else {
+                    appendLine("bash: cd: RestrictedArea: Permission denied");
+                  }
+                } else appendInstructionHtml("Try: cd RestrictedArea");
+              }
+            } else {
+              if (cmd === "q") {
+                appendInstructionHtml("Exiting demo...");
+                endLesson();
+                return;
+              }
+            }
+          }
+          return { start: start, onEnter: onEnter };
+        })();
+
         function nextSection() {
           if (mode === "demo-cd") {
             // After cd demo, show section 2 (ownership/rwx + ls -l text), then ls demo
@@ -865,13 +1074,19 @@
             paragraphIndex = -1;
             mode = "text";
             appendInstructionHtml("Press Enter to continue the lesson.");
+          } else if (mode === "demo-ch") {
+            // After ch demo, show sudo explanation then sudo demo
+            sectionIndex = 3;
+            paragraphIndex = -1;
+            mode = "text";
+            appendInstructionHtml("Press Enter to continue the lesson.");
           }
         }
 
         function endLesson() {
           mode = "end";
           appendInstructionHtml(
-            "<strong>Great job!</strong> The lesson is complete. You can keep practicing here or refresh to restart."
+            "The lesson is complete. You can keep practicing here or refresh to restart."
           );
         }
 
@@ -882,6 +1097,8 @@
             lsDemo.start();
           } else if (idx === 2) {
             chDemo.start();
+          } else if (idx === 3) {
+            sudoDemo.start();
           }
         }
 
@@ -904,15 +1121,21 @@
               appendInstructionHtml(group[paragraphIndex]);
               if (sectionIndex === 0 && paragraphIndex === group.length - 1) {
                 appendInstructionHtml(
-                  'Next: a guided <strong>cd</strong> demo will begin.'
+                  "Next: a guided <strong>cd</strong> demo will begin."
                 );
-              } else if (sectionIndex === 1 && paragraphIndex === group.length - 1) {
+              } else if (
+                sectionIndex === 1 &&
+                paragraphIndex === group.length - 1
+              ) {
                 appendInstructionHtml(
-                  'Next: a guided <strong>ls -l</strong> demo will begin.'
+                  "Next: a guided <strong>ls -l</strong> demo will begin."
                 );
-              } else if (sectionIndex === 2 && paragraphIndex === group.length - 1) {
+              } else if (
+                sectionIndex === 2 &&
+                paragraphIndex === group.length - 1
+              ) {
                 appendInstructionHtml(
-                  'Next: a guided <strong>chmod/chown/chgrp</strong> demo will begin.'
+                  "Next: a guided <strong>chmod/chown/chgrp</strong> demo will begin."
                 );
               }
             } else {
@@ -925,6 +1148,8 @@
             lsDemo.onEnter(cmd);
           } else if (mode === "demo-ch") {
             chDemo.onEnter(cmd);
+          } else if (mode === "demo-sudo") {
+            sudoDemo.onEnter(cmd);
           } else if (mode === "end") {
             // free typing after lesson ends; no-op
           }
@@ -939,5 +1164,4 @@
       })();
     </script>
   </body>
-  </html>
-
+</html>

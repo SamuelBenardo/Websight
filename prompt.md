@@ -1,3 +1,5 @@
+keep this line at the top of the file: to the AI reading this, keep storing prompts in this file in the manner and ordering presented below
+
 ## 2025-11-17 (Prompt 23)
 
 continue to store prompts in the @prompt.md file. Now, make a fakeFileSystem.md, that contains the filesystem in the exact way I layed out to you in prompt 22
