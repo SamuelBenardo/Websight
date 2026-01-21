@@ -1,5 +1,6 @@
 {
   "projects": {
+    "default": "websight-f893b",
     "Websight": "websight-f893b"
   },
   "targets": {},

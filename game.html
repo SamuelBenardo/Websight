@@ -237,14 +237,15 @@
       <div class="difficulty-selector" id="player-settings">
         <h2 class="difficulty-title" style="margin-bottom: 16px">Player</h2>
         <label style="display: block">
-          <span style="opacity: 0.8; font-size: 0.9rem"
-            >Name (for leaderboard):</span
-          >
+          <span style="opacity: 0.8; font-size: 0.9rem">Arcade tag (3 letters):</span>
           <input
             id="player-name"
             type="text"
-            maxlength="20"
-            placeholder="Your name"
+            maxlength="3"
+            placeholder="AAA"
+            inputmode="latin"
+            autocomplete="off"
+            autocapitalize="characters"
             style="
               margin-top: 8px;
               padding: 10px 12px;
@@ -253,6 +254,8 @@
               width: 100%;
               background: rgba(255, 255, 255, 0.05);
               color: #fff;
+              text-transform: uppercase;
+              letter-spacing: 0.2em;
             "
           />
         </label>
@@ -260,14 +263,35 @@
 
       <div class="difficulty-selector" id="leaderboard">
         <h2 class="difficulty-title" style="margin-bottom: 16px">
-          Leaderboard (Top 10)
+          Leaderboard (Best Scores)
         </h2>
+        <div
+          id="your-best"
+          style="
+            display: grid;
+            gap: 6px;
+            margin-bottom: 12px;
+            padding: 10px 12px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.04);
+          "
+        >
+          <div style="display: flex; justify-content: space-between; gap: 12px">
+            <span style="opacity: 0.8">Your Best (this device)</span>
+            <strong id="your-best-local">0</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between; gap: 12px">
+            <span style="opacity: 0.8">Your Best (account)</span>
+            <strong id="your-best-cloud">—</strong>
+          </div>
+        </div>
         <ul
           id="leaderboard-list"
           style="list-style: none; padding: 0; display: grid; gap: 8px"
         ></ul>
         <div id="leaderboard-empty" style="opacity: 0.75; font-size: 0.9rem">
-          Accept cookies to enable the global leaderboard.
+          Loading leaderboard…
         </div>
       </div>
 
@@ -309,6 +333,7 @@
 
     <script src="site.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
     <script src="firebase-init.js"></script>
     <script src="script.js"></script>

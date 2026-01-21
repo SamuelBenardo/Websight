@@ -53,33 +53,61 @@ const particlesContainer = document.getElementById("particles");
 const playerNameInput = document.getElementById("player-name");
 const leaderboardList = document.getElementById("leaderboard-list");
 const leaderboardEmpty = document.getElementById("leaderboard-empty");
+const yourBestLocalEl = document.getElementById("your-best-local");
+const yourBestCloudEl = document.getElementById("your-best-cloud");
+
+let currentUid = null;
+let leaderboardUnsub = null;
+let latestLeaderboardSnap = null;
+let yourBestUnsub = null;
+let yourBestUid = null;
 
 // Initialize
 document.addEventListener("DOMContentLoaded", () => {
   highscoreDisplay.textContent = highScore;
+  if (yourBestLocalEl) yourBestLocalEl.textContent = highScore;
   setupEventListeners();
   initializeProgressRing();
 
-  // Player name (localStorage)
-  const savedName = localStorage.getItem("playerName") || "";
+  // Arcade tag (localStorage)
+  const legacy = localStorage.getItem("playerName") || "";
+  const savedTag = (localStorage.getItem("whackArcadeTag") || legacy || "AAA")
+    .toUpperCase()
+    .replace(/[^A-Z]/g, "")
+    .slice(0, 3)
+    .padEnd(3, "A");
   if (playerNameInput) {
-    playerNameInput.value = savedName;
-    playerNameInput.addEventListener("change", () => {
-      const v = playerNameInput.value.trim().slice(0, 20);
-      localStorage.setItem("playerName", v);
+    playerNameInput.value = savedTag;
+    localStorage.setItem("whackArcadeTag", savedTag);
+    playerNameInput.addEventListener("input", () => {
+      const v = (playerNameInput.value || "")
+        .toUpperCase()
+        .replace(/[^A-Z]/g, "")
+        .slice(0, 3);
       playerNameInput.value = v;
+    });
+    playerNameInput.addEventListener("blur", () => {
+      const v = (playerNameInput.value || "")
+        .toUpperCase()
+        .replace(/[^A-Z]/g, "")
+        .slice(0, 3)
+        .padEnd(3, "A");
+      playerNameInput.value = v;
+      localStorage.setItem("whackArcadeTag", v);
     });
   }
 
-  // Leaderboard load on consent
-  if (window.hasConsent && window.hasConsent() && window.db) {
-    loadLeaderboard();
-  }
-  window.addEventListener("consent-changed", () => {
-    if (window.hasConsent && window.hasConsent() && window.db) {
+  // Leaderboard (protected writes, public reads). Load ASAP; refresh when auth is ready.
+  if (leaderboardEmpty) leaderboardEmpty.style.display = "block";
+  if (window.db) loadLeaderboard();
+  if (window.auth) {
+    // eslint-disable-next-line no-undef
+    window.auth.onAuthStateChanged((user) => {
+      currentUid = user?.uid || null;
+      loadYourBest();
       loadLeaderboard();
-    }
-  });
+    });
+  }
 });
 
 // Progress Ring Setup
@@ -285,6 +313,7 @@ function updateScore() {
   if (score > highScore) {
     highScore = score;
     highscoreDisplay.textContent = highScore;
+    if (yourBestLocalEl) yourBestLocalEl.textContent = highScore;
     localStorage.setItem("whackHighScore", highScore);
 
     // Celebrate new high score
@@ -681,79 +710,193 @@ document.addEventListener("keydown", (e) => {
 console.log("🎮 Whack-A-Mole Pro Edition loaded!");
 console.log("💡 Tip: Try the Konami code for a bonus! ⬆️⬆️⬇️⬇️⬅️➡️⬅️➡️BA");
 
-// Leaderboard integration (consent-gated)
+// Leaderboard integration (protected: anonymous auth + per-user best doc)
+function getArcadeTag() {
+  const raw =
+    playerNameInput?.value || localStorage.getItem("whackArcadeTag") || "AAA";
+  return String(raw)
+    .toUpperCase()
+    .replace(/[^A-Z]/g, "")
+    .slice(0, 3)
+    .padEnd(3, "A");
+}
+
+function waitForAuthUser(timeoutMs = 5000) {
+  return new Promise((resolve) => {
+    const auth = window.auth;
+    if (!auth) return resolve(null);
+    if (auth.currentUser) return resolve(auth.currentUser);
+    const unsub = auth.onAuthStateChanged((user) => {
+      try {
+        unsub?.();
+      } catch (_) {
+        // ignore
+      }
+      resolve(user || null);
+    });
+    setTimeout(() => resolve(auth.currentUser || null), timeoutMs);
+  });
+}
+
+function loadYourBest() {
+  try {
+    if (!yourBestCloudEl) return;
+    if (!window.db) {
+      yourBestCloudEl.textContent = "—";
+      return;
+    }
+    const user = window.auth?.currentUser;
+    const uid = user?.uid || currentUid;
+    if (!uid) {
+      yourBestCloudEl.textContent = "—";
+      return;
+    }
+
+    if (yourBestUnsub && yourBestUid === uid) return;
+    try {
+      yourBestUnsub?.();
+    } catch (_) {
+      // ignore
+    }
+    yourBestUid = uid;
+    yourBestCloudEl.textContent = "…";
+
+    yourBestUnsub = window.db
+      .collection("scores")
+      .doc(uid)
+      .onSnapshot(
+        (doc) => {
+          const data = doc.exists ? doc.data() : null;
+          yourBestCloudEl.textContent = data?.score ?? "—";
+        },
+        (e) => {
+          console.error("Your best load failed:", e);
+          yourBestCloudEl.textContent = "—";
+        }
+      );
+  } catch (e) {
+    console.error("Your best load failed:", e);
+    if (yourBestCloudEl) yourBestCloudEl.textContent = "—";
+  }
+}
+
 async function submitScoreToFirestore() {
   try {
-    if (!window.db || !window.hasConsent || !window.hasConsent()) return;
-
-    const name =
-      (
-        playerNameInput?.value ||
-        localStorage.getItem("playerName") ||
-        "Anonymous"
-      )
-        .trim()
-        .slice(0, 20) || "Anonymous";
+    if (!window.db) return;
+    const user = (await waitForAuthUser()) || window.auth?.currentUser;
+    if (!user) return;
+    const uid = user.uid;
+    const nickname = getArcadeTag();
 
     const totalAttempts = hits + misses;
     const accuracy =
       totalAttempts > 0 ? Math.round((hits / totalAttempts) * 100) : 0;
 
-    const data = {
-      name,
-      score,
-      bestStreak,
-      accuracy,
-      difficulty,
-      // eslint-disable-next-line no-undef
-      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-    };
+    await window.db.runTransaction(async (t) => {
+      const ref = window.db.collection("scores").doc(uid);
+      const snap = await t.get(ref);
+      const prev = snap.exists ? snap.data() : null;
+      const prevScore = typeof prev?.score === "number" ? prev.score : -1;
+      if (score <= prevScore) return;
 
-    await window.db.collection("scores").add(data);
+      const next = {
+        nickname,
+        score,
+        bestStreak,
+        accuracy,
+        difficulty,
+        // eslint-disable-next-line no-undef
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      };
+      if (!snap.exists) {
+        // eslint-disable-next-line no-undef
+        next.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+      }
+      t.set(ref, next, { merge: true });
+    });
+
+    loadYourBest();
     loadLeaderboard();
   } catch (e) {
     console.error("Score save failed:", e);
   }
 }
 
-async function loadLeaderboard() {
+function renderLeaderboard(snap) {
+  if (!leaderboardList || !snap) return;
+  leaderboardList.innerHTML = "";
+  let rank = 1;
+  snap.forEach((doc) => {
+    const s = doc.data();
+    const isYou = currentUid && doc.id === currentUid;
+    const li = document.createElement("li");
+    li.style.display = "flex";
+    li.style.justifyContent = "space-between";
+    li.style.alignItems = "center";
+    li.style.padding = "10px 12px";
+    li.style.border = "1px solid rgba(255,255,255,.12)";
+    li.style.borderRadius = "12px";
+    li.style.background = isYou
+      ? "rgba(102, 126, 234, .18)"
+      : "rgba(255,255,255,.05)";
+    li.innerHTML = `
+      <span style="opacity:.85;">#${rank} — ${
+      isYou ? "<strong>YOU</strong> " : ""
+    }${escapeHtml(s.nickname || "AAA")}</span>
+      <strong style="letter-spacing:.5px;">${s.score ?? 0}</strong>
+    `;
+    leaderboardList.appendChild(li);
+    rank++;
+  });
+}
+
+function loadLeaderboard() {
   try {
-    if (!window.db || !window.hasConsent || !window.hasConsent()) {
+    if (!window.db) {
       if (leaderboardEmpty) leaderboardEmpty.style.display = "block";
       return;
     }
-    if (leaderboardEmpty) leaderboardEmpty.style.display = "none";
     if (!leaderboardList) return;
 
-    const snap = await window.db
+    // If we're already subscribed, just re-render (needed when currentUid changes).
+    if (leaderboardUnsub) {
+      renderLeaderboard(latestLeaderboardSnap);
+      return;
+    }
+
+    if (leaderboardEmpty) {
+      leaderboardEmpty.style.display = "block";
+      leaderboardEmpty.textContent = "Loading leaderboard…";
+    }
+
+    leaderboardUnsub = window.db
       .collection("scores")
       .orderBy("score", "desc")
-      .limit(10)
-      .get();
-
-    leaderboardList.innerHTML = "";
-    let rank = 1;
-    snap.forEach((doc) => {
-      const s = doc.data();
-      const li = document.createElement("li");
-      li.style.display = "flex";
-      li.style.justifyContent = "space-between";
-      li.style.alignItems = "center";
-      li.style.padding = "10px 12px";
-      li.style.border = "1px solid rgba(255,255,255,.12)";
-      li.style.borderRadius = "12px";
-      li.style.background = "rgba(255,255,255,.05)";
-      li.innerHTML = `
-        <span style="opacity:.8;">#${rank} — ${escapeHtml(
-        s.name || "Anonymous"
-      )}</span>
-        <strong style="letter-spacing:.5px;">${s.score ?? 0}</strong>
-      `;
-      leaderboardList.appendChild(li);
-      rank++;
-    });
+      .limit(100)
+      .onSnapshot(
+        (snap) => {
+          latestLeaderboardSnap = snap;
+          if (leaderboardEmpty) leaderboardEmpty.style.display = "none";
+          renderLeaderboard(snap);
+          if (leaderboardEmpty && snap.empty) {
+            leaderboardEmpty.style.display = "block";
+            leaderboardEmpty.textContent = "No scores yet — play a round!";
+          }
+        },
+        (e) => {
+          console.error("Leaderboard load failed:", e);
+          if (leaderboardEmpty) {
+            leaderboardEmpty.style.display = "block";
+            leaderboardEmpty.textContent = "Leaderboard failed to load.";
+          }
+        }
+      );
   } catch (e) {
     console.error("Leaderboard load failed:", e);
+    if (leaderboardEmpty) {
+      leaderboardEmpty.style.display = "block";
+      leaderboardEmpty.textContent = "Leaderboard failed to load.";
+    }
   }
 }
 

@@ -1,24 +1,48 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /scores/{docId} {
-      allow read: if true;
-      allow create: if
-        request.resource.data.keys().hasOnly([
-          'name','score','bestStreak','accuracy','difficulty','createdAt'
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidBestScore(data) {
+      return
+        // Required fields
+        data.keys().hasAll(['nickname', 'score', 'bestStreak', 'accuracy', 'difficulty']) &&
+        // No unexpected fields (timestamps are optional)
+        data.keys().hasOnly([
+          'nickname','score','bestStreak','accuracy','difficulty','createdAt','updatedAt'
         ]) &&
-        request.resource.data.name is string &&
-        request.resource.data.name.size() > 0 &&
-        request.resource.data.name.size() <= 20 &&
-        request.resource.data.score is int &&
-        request.resource.data.score >= 0 &&
-        request.resource.data.score <= 5000 &&
-        request.resource.data.bestStreak is int &&
-        request.resource.data.accuracy is int &&
-        request.resource.data.accuracy >= 0 &&
-        request.resource.data.accuracy <= 100 &&
-        request.resource.data.difficulty in ['easy','medium','hard'];
-      allow update, delete: if false;
+        data.nickname is string &&
+        data.nickname.matches('^[A-Z]{3}$') &&
+        data.score is int &&
+        data.score >= 0 &&
+        data.score <= 5000 &&
+        data.bestStreak is int &&
+        data.bestStreak >= 0 &&
+        data.bestStreak <= 5000 &&
+        data.accuracy is int &&
+        data.accuracy >= 0 &&
+        data.accuracy <= 100 &&
+        data.difficulty in ['easy','medium','hard'];
+    }
+
+    // One doc per user (doc id == uid). This allows a "personal best" leaderboard.
+    match /scores/{uid} {
+      allow read: if true;
+
+      // First best score for this uid.
+      allow create: if isSignedIn() &&
+        request.auth.uid == uid &&
+        isValidBestScore(request.resource.data);
+
+      // Only allow raising your own best score.
+      allow update: if isSignedIn() &&
+        request.auth.uid == uid &&
+        isValidBestScore(request.resource.data) &&
+        request.resource.data.score >= resource.data.score;
+
+      allow delete: if false;
     }
   }
 }
